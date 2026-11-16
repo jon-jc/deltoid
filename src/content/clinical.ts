@@ -11,6 +11,14 @@
 
 export const ACCESSED = "2026-11-15";
 
+/**
+ * How the sources were read: the job aids and the wall chart are PDFs and
+ * were read in full. The two web pages (best practice guidelines and Pink
+ * Book chapter 6) were read as full page text in a browser, including the
+ * Pink Book's collapsed sections and both needle tables with footnotes, and
+ * every statement below that cites them was compared with that text.
+ */
+
 /* ------------------------------------------------------------ sources */
 
 export type SourceId =
@@ -251,8 +259,8 @@ export const SITES: Record<SiteId, Site> = {
     label: "Upper outer triceps area",
     plain: "the upper outer triceps area of the arm",
     find: {
-      text: "The fatty tissue over the triceps, on the outer back of the upper arm.",
-      sources: ["ycts_subcut", "acip_admin"],
+      text: "The fatty tissue over the upper outer triceps area of the arm. The triceps is the muscle on the back of the upper arm.",
+      sources: ["pinkbook_ch6", "ycts_subcut", "acip_admin"],
     },
   },
   Forearm: {
@@ -269,7 +277,7 @@ export const SITES: Record<SiteId, Site> = {
     label: "Ventrogluteal site, hip",
     plain: "the ventrogluteal site on the hip",
     find: {
-      text: "The centre of a triangle between the anterior superior iliac spine (front point of the hip bone), the tubercle of the iliac crest (top rim of the hip bone) and the upper border of the greater trochanter. CDC describes it for when a gluteal muscle must be used; it is not a routine vaccine site.",
+      text: "The centre of a triangle between the anterior superior iliac spine (front point of the hip bone), the tubercle of the iliac crest (top rim of the hip bone) and the upper border of the greater trochanter. CDC describes it for when a gluteal muscle must be used; its two recommended sites for intramuscular vaccines are the deltoid and the outer front of the thigh.",
       sources: ["pinkbook_ch6", "acip_admin"],
     },
   },
@@ -287,7 +295,7 @@ export const SITES: Record<SiteId, Site> = {
 /** Why a tapped zone is wrong when it is not accepted for a case. */
 export const SITE_NOT_USED: Record<SiteId, { infant: Cited; adult: Cited }> = {
   Deltoid: {
-    infant: { text: "For infants under 12 months, CDC recommends the outer front of the thigh, not the deltoid.", sources: ["acip_admin", "ycts_im_infant"] },
+    infant: { text: "For most infants under 12 months, CDC recommends the outer front of the thigh, because it has more muscle than the deltoid.", sources: ["acip_admin", "ycts_im_infant"] },
     adult: { text: "The deltoid is CDC's site for intramuscular injections, not for this route.", sources: ["ycts_im_adult"] },
   },
   VastusLateralis: {
@@ -295,8 +303,8 @@ export const SITE_NOT_USED: Record<SiteId, { infant: Cited; adult: Cited }> = {
     adult: { text: "The thigh is not the site CDC gives for this route in adults.", sources: ["acip_admin"] },
   },
   Triceps: {
-    infant: { text: "The upper outer triceps area is CDC's site for subcutaneous injections, not for intramuscular ones.", sources: ["ycts_subcut"] },
-    adult: { text: "The upper outer triceps area is CDC's site for subcutaneous injections, not for this route.", sources: ["ycts_subcut"] },
+    infant: { text: "The upper outer triceps area is CDC's site for subcutaneous injections, not for intramuscular ones.", sources: ["ycts_subcut", "pinkbook_ch6"] },
+    adult: { text: "The upper outer triceps area is CDC's site for subcutaneous injections, not for this route.", sources: ["ycts_subcut", "pinkbook_ch6"] },
   },
   Forearm: {
     infant: { text: "The inner forearm is where CDC places the tuberculin skin test, not vaccines.", sources: ["tb_chart"] },
@@ -308,7 +316,7 @@ export const SITE_NOT_USED: Record<SiteId, { infant: Cited; adult: Cited }> = {
   },
   Buttock: {
     infant: { text: "CDC does not use the muscles of the buttock for vaccines in infants and children, because of possible injury to the sciatic nerve.", sources: ["pinkbook_ch6"] },
-    adult: { text: "The buttock is not a site CDC recommends here. For adults, CDC recommends the deltoid for routine intramuscular vaccines.", sources: ["acip_admin", "ycts_im_adult"] },
+    adult: { text: "The buttock is not a site CDC recommends here. CDC names only two sites for intramuscular vaccines, the deltoid and the outer front of the thigh, and recommends the deltoid for adults.", sources: ["pinkbook_ch6", "acip_admin"] },
   },
 };
 
@@ -398,8 +406,8 @@ export const PROFILES: Record<ProfileId, Profile> = {
         ok: ["in1"],
         conditional: [{ needle: "in58", when: STRETCH }],
         statement: {
-          text: "For infants 11 months and younger CDC lists a 1 inch needle; a ⅝ inch needle may be used for newborns 28 days and younger if the skin is stretched tightly and the tissue under it is not bunched.",
-          sources: ["ycts_im_infant", "acip_admin"],
+          text: "For newborns in the first 28 days, CDC's needle tables list ⅝ inch, used with the skin stretched tightly and the tissue under it not bunched. CDC's infant job aid lists 1 inch for infants 11 months and younger.",
+          sources: ["acip_admin", "pinkbook_ch6", "ycts_im_infant"],
         },
       },
     },
@@ -490,7 +498,7 @@ export const PROFILES: Record<ProfileId, Profile> = {
 export const ROUTE_NEEDLES: Record<Exclude<RouteId, "im">, { ok: NeedleId[]; statement: Cited }> = {
   subcut: {
     ok: ["in58"],
-    statement: { text: "For subcutaneous injections CDC lists a ⅝ inch (16 mm), 23 to 25 gauge needle at every age.", sources: ["ycts_subcut", "acip_admin"] },
+    statement: { text: "For subcutaneous injections CDC lists a ⅝ inch (16 mm), 23 to 25 gauge needle at every age.", sources: ["pinkbook_ch6", "ycts_subcut", "acip_admin"] },
   },
   id: {
     ok: ["tb"],
@@ -532,7 +540,7 @@ const IM_ADULT_SITES: CaseSite[] = [
   {
     site: "VastusLateralis",
     status: "alternative",
-    note: { text: "CDC recommends the deltoid for adults. The outer front of the thigh can also be used.", sources: ["pinkbook_ch6", "acip_admin"] },
+    note: { text: "CDC recommends the deltoid for adults. The outer front of the thigh can also be used; the Pink Book describes it as the alternative when the deltoid cannot be used.", sources: ["acip_admin", "pinkbook_ch6"] },
   },
 ];
 
@@ -540,7 +548,7 @@ const IM_INFANT_SITES: CaseSite[] = [
   {
     site: "VastusLateralis",
     status: "recommended",
-    note: { text: "For infants under 12 months, CDC recommends the vastus lateralis muscle on the outer front of the thigh.", sources: ["acip_admin", "ycts_im_infant"] },
+    note: { text: "For most infants under 12 months, CDC recommends the vastus lateralis muscle on the outer front of the thigh.", sources: ["acip_admin", "pinkbook_ch6", "ycts_im_infant"] },
   },
 ];
 
@@ -619,7 +627,7 @@ export const CASES: Case[] = [
       {
         site: "VastusLateralis",
         status: "recommended",
-        note: { text: "For infants under 12 months, CDC gives subcutaneous injections in the thigh.", sources: ["ycts_subcut", "acip_admin"] },
+        note: { text: "For infants under 12 months, CDC usually gives subcutaneous injections in the fatty tissue of the thigh.", sources: ["acip_admin", "pinkbook_ch6", "ycts_subcut"] },
       },
       {
         site: "Triceps",
