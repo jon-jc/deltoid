@@ -54,4 +54,4 @@ CLAUDE.md
 __pycache__/
 
 # end-to-end screenshots
-/tools/out/
+/tools/out*/
