@@ -226,7 +226,7 @@ export default function Trainer() {
   const patient = s.screen === "case" ? c.model : "adult";
 
   return (
-    <div className={styles.shell}>
+    <main className={styles.shell}>
       <section className={styles.stageWrap} aria-label="3D view">
         <Stage3D
           handle={stage}
@@ -470,7 +470,7 @@ export default function Trainer() {
           </>
         )}
       </section>
-    </div>
+    </main>
   );
 }
 
