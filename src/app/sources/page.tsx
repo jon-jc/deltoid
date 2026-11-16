@@ -1,0 +1,83 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import SiteHeader from "@/components/SiteHeader";
+import { ACCESSED, NOT_COVERED, SOURCES } from "@/content/clinical";
+
+export const metadata: Metadata = {
+  title: "Sources | Deltoid",
+  description: "Every clinical statement in Deltoid, traced to the CDC source it was read from.",
+};
+
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+function readable(iso: string) {
+  const [y, m, d] = iso.split("-").map(Number);
+  return `${MONTHS[m - 1]} ${d}, ${y}`;
+}
+
+export default function SourcesPage() {
+  const list = Object.values(SOURCES);
+  return (
+    <>
+      <SiteHeader current="sources" />
+      <main className="doc">
+        <div className="doc-inner">
+          <h1>Sources</h1>
+          <p>
+            Every site, needle length, gauge and angle in this trainer was read from the U.S. Centers for Disease Control
+            and Prevention (CDC) pages and job aids below on {readable(ACCESSED)}. Nothing was written from memory.
+            Guidance changes, so check the current CDC page and the procedures of your employer before relying on any
+            value.
+          </p>
+          <ul className="source-list">
+            {list.map((s) => (
+              <li key={s.id} id={s.id}>
+                <h3>
+                  <a href={s.url} target="_blank" rel="noopener noreferrer">
+                    {s.title}
+                  </a>
+                </h3>
+                <dl>
+                  <div>
+                    <dt>Publisher</dt>
+                    <dd>{s.publisher}</dd>
+                  </div>
+                  <div>
+                    <dt>Date on source</dt>
+                    <dd>{s.published}</dd>
+                  </div>
+                  <div>
+                    <dt>Accessed</dt>
+                    <dd>{readable(s.accessed)}</dd>
+                  </div>
+                  <div>
+                    <dt>Link</dt>
+                    <dd>
+                      <a href={s.url} target="_blank" rel="noopener noreferrer">
+                        {s.url}
+                      </a>
+                    </dd>
+                  </div>
+                </dl>
+              </li>
+            ))}
+          </ul>
+
+          <h2>Left out on purpose</h2>
+          <p>Where CDC does not give a value, the trainer does not invent one.</p>
+          <ul>
+            {NOT_COVERED.map((t) => (
+              <li key={t}>{t}</li>
+            ))}
+          </ul>
+
+          <p>
+            <Link href="/" className="back-link">
+              Back to the trainer
+            </Link>
+          </p>
+        </div>
+      </main>
+    </>
+  );
+}
