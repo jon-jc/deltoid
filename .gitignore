@@ -52,3 +52,6 @@ CLAUDE.md
 # uncompressed Blender exports (rebuilt by assets/blender/scripts/export_all.py)
 /assets/blender/export/
 __pycache__/
+
+# end-to-end screenshots
+/tools/out/

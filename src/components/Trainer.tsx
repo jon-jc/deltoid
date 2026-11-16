@@ -239,6 +239,7 @@ export default function Trainer() {
           needle={needlePose}
           injected={s.step === "result"}
           tipTissue={tip}
+          bottomInset={s.screen === "case" && s.step === "site" ? 60 : 0}
           onTap={onTap}
         />
         {s.screen === "case" && s.step === "site" && (
@@ -262,7 +263,7 @@ export default function Trainer() {
         )}
       </section>
 
-      <section className={styles.panel} ref={panel} aria-live="polite">
+      <section className={styles.panel} ref={panel}>
         {s.screen === "home" && (
           <div className={styles.home}>
             <h1 className={styles.lead}>{COPY.tagline}</h1>
@@ -297,9 +298,9 @@ export default function Trainer() {
                 <CaseCard c={c} />
                 <p className={styles.prompt}>
                   {s.tap ? (
-                    <>
+                    <span role="status">
                       Marked: <strong>{siteText(s.tap)}</strong>
-                    </>
+                    </span>
                   ) : (
                     <>
                       <strong>Tap the injection site</strong> on the patient. Drag to turn, pinch to zoom.
@@ -374,7 +375,9 @@ export default function Trainer() {
                   </span>
                   <h2>{last.result.correct ? "Correct" : "Not quite"}</h2>
                 </div>
-                <p className={styles.summary}>{last.result.summary}</p>
+                <p className={styles.summary} role="status">
+                  {last.result.summary}
+                </p>
                 <ul className={styles.findings}>
                   {last.result.findings.map((f) => (
                     <li key={f.part} data-ok={f.ok ? "1" : "0"}>

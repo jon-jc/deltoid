@@ -32,13 +32,13 @@
 
 .views {
   display: flex;
-  gap: 6px;
+  gap: 5px;
 }
 
 .chip {
   min-height: 44px;
   min-width: 44px;
-  padding: 0 12px;
+  padding: 0 11px;
   border-radius: 999px;
   border: 1px solid var(--line-strong);
   background: rgba(250, 248, 242, 0.92);
@@ -458,6 +458,31 @@
   clip-path: inset(50%);
   white-space: nowrap;
   border: 0;
+}
+
+/* Narrow phones: keep all five chips on one row. */
+@media (max-width: 379px) {
+  .chip {
+    padding: 0 8px;
+    font-size: 0.8125rem;
+  }
+
+  .views {
+    gap: 4px;
+  }
+
+  .stageBar {
+    gap: 4px;
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+}
+
+/* Short screens (landscape phones): give the panel room. */
+@media (max-height: 560px) and (max-width: 899px) {
+  .stageWrap {
+    height: clamp(200px, 44svh, 300px);
+  }
 }
 
 /* Wider screens: the 3D view takes the left, the panel sits beside it. */
