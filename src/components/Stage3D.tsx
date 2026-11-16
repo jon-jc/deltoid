@@ -19,6 +19,8 @@ export interface Stage3DProps {
   needle: NeedlePose;
   injected: boolean;
   tipTissue: TissueId | null;
+  /** Height in pixels of controls drawn over the bottom of the view. */
+  bottomInset: number;
   onTap: (tap: TapResult) => void;
   handle?: Ref<StageHandle>;
 }
@@ -31,7 +33,7 @@ interface LayerRow {
 const LAYER_ORDER: TissueId[] = ["skin", "fat", "muscle", "bone"];
 
 export default function Stage3D(props: Stage3DProps) {
-  const { mode, patient, landmarks, view, marker, profile, needle, injected, tipTissue, onTap, handle } = props;
+  const { mode, patient, landmarks, view, marker, profile, needle, injected, tipTissue, bottomInset, onTap, handle } = props;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Stage | null>(null);
@@ -99,6 +101,10 @@ export default function Stage3D(props: Stage3DProps) {
       stageRef.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    stageRef.current?.setBottomInset(mode === "cutaway" ? 0 : bottomInset);
+  }, [gen, mode, bottomInset]);
 
   useEffect(() => {
     const s = stageRef.current;

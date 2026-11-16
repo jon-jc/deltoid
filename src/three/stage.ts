@@ -147,6 +147,7 @@ export class Stage {
   private spinHold = 0;
   private lastTime = 0;
   private interactive = true;
+  private bottomInset = 0;
   private landmarksOn = false;
   private labelSpecs: LabelSpec[] = [];
 
@@ -417,6 +418,13 @@ export class Stage {
     this.interactive = on;
   }
 
+  /** Pixels at the bottom of the view covered by on-screen controls; the camera keeps targets clear of them. */
+  setBottomInset(px: number) {
+    if (px === this.bottomInset) return;
+    this.bottomInset = px;
+    this.refit(true);
+  }
+
   setLabels(specs: LabelSpec[]) {
     this.labelSpecs = specs;
     this.buildLabels();
@@ -512,7 +520,7 @@ export class Stage {
     const sgn = left ? 1 : -1;
     const spec: Record<ViewName, { box: string; yaw: number; pitch: number }> = {
       body: { box: "Body", yaw: this.spin ? this.yaw : 0.55, pitch: 0.06 },
-      case: { box: "Case", yaw: 0.62, pitch: 0.08 },
+      case: { box: p.kind === "infant" ? "Body" : "Case", yaw: 0.62, pitch: 0.08 },
       arm: { box: `Arm_${side}`, yaw: 1.05 * sgn, pitch: 0.12 },
       thigh: { box: `Thigh_${side}`, yaw: 0.8 * sgn, pitch: 0.1 },
       hip: { box: `Hip_${side}`, yaw: 1.2 * sgn, pitch: 0.1 },
@@ -545,13 +553,18 @@ export class Stage {
     }
     const tanV = Math.tan((this.camera.fov * DEG) / 2);
     const tanH = tanV * this.camera.aspect;
-    return Math.max(hh / tanV, hw / tanH) * margin + depth;
+    // fit into the part of the view that is not covered by controls
+    const usable = Math.max(0.5, 1 - this.bottomInset / this.height);
+    const dist = Math.max(hh / (tanV * usable), hw / tanH) * margin + depth;
+    // look a little lower so the content sits in the clear part
+    const lift = (this.bottomInset / 2) * ((2 * dist * tanV) / this.height);
+    return { dist, shift: up.multiplyScalar(-lift) };
   }
 
   private flyTo(box: Box3, yaw: number, pitch: number, animate: boolean, margin = 1.12) {
     this.lastFit = { box: box.clone(), margin };
-    const centre = box.getCenter(new Vector3());
-    const dist = this.distanceFor(box, yaw, pitch, margin);
+    const { dist, shift } = this.distanceFor(box, yaw, pitch, margin);
+    const centre = box.getCenter(new Vector3()).add(shift);
     this.fitDist = dist;
     const from = { t: this.target.clone(), yaw: this.yaw, pitch: this.pitch, dist: this.dist };
     // take the short way round
