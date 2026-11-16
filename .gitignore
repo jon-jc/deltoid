@@ -48,3 +48,7 @@ CLAUDE.md
 # scratch output
 /tmp/
 *.blend1
+
+# uncompressed Blender exports (rebuilt by assets/blender/scripts/export_all.py)
+/assets/blender/export/
+__pycache__/
