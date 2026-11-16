@@ -1,0 +1,17 @@
+:root {
+  --paper: #f3f0e8;
+  --ink: #1d2b2c;
+  --font-body: var(--font-atkinson), system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+}
