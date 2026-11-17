@@ -628,9 +628,59 @@
   margin: 0;
 }
 
-.answer {
-  padding-top: 6px;
-  border-top: 1px solid var(--line);
+/* CDC's answer after a miss: a small card with a teal rule. */
+.answerCard {
+  padding: 10px 14px 12px;
+  border-radius: 12px;
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--teal);
+}
+
+.answerCard h3 {
+  margin: 0 0 6px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--teal-ink);
+}
+
+.answerCard dl {
+  margin: 0;
+  display: grid;
+  gap: 3px;
+  font-size: 0.9375rem;
+  line-height: 1.35;
+}
+
+.answerCard dl > div {
+  display: grid;
+  grid-template-columns: 4rem 1fr;
+  gap: 8px;
+}
+
+.answerCard dt {
+  color: var(--ink-3);
+}
+
+.answerCard dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+/* Try again beside Next case. */
+.footerRow {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-columns: auto;
+  grid-auto-columns: 1fr;
+  gap: 8px;
+}
+
+.footerRow > .secondary {
+  width: auto;
+  padding: 0 18px;
+  white-space: nowrap;
 }
 
 .srOnly {

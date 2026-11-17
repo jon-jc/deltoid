@@ -38,6 +38,8 @@ interface Attempt {
   pick: Pick;
   result: Result;
   landmarks: boolean;
+  /** false for a second try at a case: it is graded but does not change the score */
+  scored: boolean;
 }
 
 interface State {
@@ -50,6 +52,7 @@ interface State {
   angle: AngleId | null;
   landmarks: boolean;
   usedLandmarks: boolean;
+  retrying: boolean;
   view: { name: ViewName; nonce: number };
   attempts: Attempt[];
 }
@@ -63,6 +66,7 @@ type Action =
   | { type: "needle"; id: NeedleId }
   | { type: "angle"; id: AngleId }
   | { type: "check" }
+  | { type: "retry" }
   | { type: "next" }
   | { type: "landmarks" }
   | { type: "view"; name: ViewName };
@@ -77,11 +81,20 @@ const INITIAL: State = {
   angle: null,
   landmarks: false,
   usedLandmarks: false,
+  retrying: false,
   view: { name: "case", nonce: 0 },
   attempts: [],
 };
 
-const freshCase = { step: "site" as const, tap: null, needle: null, angle: null, landmarks: false, usedLandmarks: false };
+const freshCase = {
+  step: "site" as const,
+  tap: null,
+  needle: null,
+  angle: null,
+  landmarks: false,
+  usedLandmarks: false,
+  retrying: false,
+};
 
 function reducer(s: State, a: Action): State {
   switch (a.type) {
@@ -106,9 +119,14 @@ function reducer(s: State, a: Action): State {
       return {
         ...s,
         step: "result",
-        attempts: [...s.attempts, { caseId: c.id, pick, result: grade(c, pick), landmarks: s.usedLandmarks }],
+        attempts: [
+          ...s.attempts,
+          { caseId: c.id, pick, result: grade(c, pick), landmarks: s.usedLandmarks, scored: !s.retrying },
+        ],
       };
     }
+    case "retry":
+      return s.step === "result" ? { ...s, ...freshCase, retrying: true, view: { name: "case", nonce: s.view.nonce + 1 } } : s;
     case "next":
       if (s.index + 1 >= CASES.length) return { ...s, screen: "review", ...freshCase };
       return { ...s, index: s.index + 1, ...freshCase };
@@ -162,6 +180,30 @@ function CaseCard({ c, compact }: { c: Case; compact?: boolean }) {
             <dd>{c.constraint}</dd>
           </div>
         )}
+      </dl>
+    </div>
+  );
+}
+
+/** CDC's answer for a case, shown after a miss. */
+function AnswerCard({ c }: { c: Case }) {
+  const ans = correctAnswer(c);
+  return (
+    <div className={styles.answerCard}>
+      <h3>CDC&apos;s answer</h3>
+      <dl>
+        <div>
+          <dt>Site</dt>
+          <dd>{ans.site}</dd>
+        </div>
+        <div>
+          <dt>Needle</dt>
+          <dd>{ans.needle}</dd>
+        </div>
+        <div>
+          <dt>Angle</dt>
+          <dd>{ans.angle}</dd>
+        </div>
       </dl>
     </div>
   );
@@ -223,7 +265,8 @@ export default function Trainer() {
   const stage = useRef<StageHandle>(null);
   const panel = useRef<HTMLDivElement>(null);
   const c = CASES[s.index];
-  const correctCount = s.attempts.filter((a) => a.result.correct).length;
+  const scored = s.attempts.filter((a) => a.scored);
+  const correctCount = scored.filter((a) => a.result.correct).length;
   const last = s.attempts[s.attempts.length - 1];
 
   // after a tap, let the learner see where it landed, then move to the needle step
@@ -342,9 +385,9 @@ export default function Trainer() {
             <div className={styles.progress}>
               <span className={styles.progressLabel}>
                 {s.demo && s.index === 0 ? "30-second case" : `Case ${s.index + 1} of ${CASES.length}`}
-                {s.attempts.length > 0 && <span className={styles.muted}> · {correctCount} correct</span>}
+                {scored.length > 0 && <span className={styles.muted}> · {correctCount} correct</span>}
               </span>
-              {!(s.demo && s.index === 0) && <ScoreTrack attempts={s.attempts} index={s.index} />}
+              {!(s.demo && s.index === 0) && <ScoreTrack attempts={scored} index={s.index} />}
               <button type="button" className={styles.linkBtn} onClick={() => dispatch({ type: "home" })}>
                 Start over
               </button>
@@ -436,6 +479,7 @@ export default function Trainer() {
                 <p className={styles.summary} role="status">
                   {last.result.summary}
                 </p>
+                {!last.result.correct && <AnswerCard c={c} />}
                 <ul className={styles.findings}>
                   {last.result.findings.map((f) => (
                     <li key={f.part} data-ok={f.ok ? "1" : "0"}>
@@ -447,6 +491,7 @@ export default function Trainer() {
                     </li>
                   ))}
                 </ul>
+                {!last.scored && <p className={styles.fine}>Second try: graded, but your score keeps the first answer.</p>}
                 <SourceLinks ids={last.result.sources} />
                 <p className={styles.fine}>{COPY.schematic}</p>
               </div>
@@ -465,9 +510,16 @@ export default function Trainer() {
                 </button>
               )}
               {s.step === "result" && (
-                <button type="button" className={styles.primary} onClick={() => dispatch({ type: "next" })}>
-                  {s.index + 1 >= CASES.length ? "See review" : "Next case"}
-                </button>
+                <div className={styles.footerRow}>
+                  {last && !last.result.correct && (
+                    <button type="button" className={styles.secondary} onClick={() => dispatch({ type: "retry" })}>
+                      Try again
+                    </button>
+                  )}
+                  <button type="button" className={styles.primary} onClick={() => dispatch({ type: "next" })}>
+                    {s.index + 1 >= CASES.length ? "See review" : "Next case"}
+                  </button>
+                </div>
               )}
             </div>
           </>
@@ -477,15 +529,15 @@ export default function Trainer() {
           <>
             <div className={styles.body}>
               <h1 className={styles.lead}>
-                {correctCount} of {s.attempts.length} correct
+                {correctCount} of {scored.length} correct
               </h1>
-              {s.attempts.every((a) => a.result.correct) ? (
+              {scored.every((a) => a.result.correct) ? (
                 <p className={styles.summary}>No misses. Every answer matched CDC guidance.</p>
               ) : (
                 <>
                   <p className={styles.summary}>Each miss, with the answer CDC gives and where it comes from.</p>
                   <ol className={styles.review}>
-                    {s.attempts
+                    {scored
                       .filter((a) => !a.result.correct)
                       .map((a) => {
                         const rc = CASES.find((x) => x.id === a.caseId) as Case;
@@ -505,9 +557,7 @@ export default function Trainer() {
                                   </li>
                                 ))}
                             </ul>
-                            <p className={styles.answer}>
-                              <strong>CDC:</strong> {ans.site.toLowerCase()}, {ans.needle} needle, {ans.angle}.
-                            </p>
+                            <AnswerCard c={rc} />
                             <SourceLinks ids={ans.sources} />
                           </li>
                         );
