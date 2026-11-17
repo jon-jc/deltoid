@@ -876,3 +876,68 @@
     padding: 14px 24px 0;
   }
 }
+
+/* ------------------------------------------------------------ motion */
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(0.4);
+  }
+  70% {
+    transform: scale(1.12);
+  }
+}
+
+@keyframes fill {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+/* Each step's panel eases in when it appears. */
+.body,
+.home {
+  animation: rise 0.24s ease-out both;
+}
+
+.mark {
+  animation: pop 0.34s cubic-bezier(0.3, 0.7, 0.4, 1.4) both;
+}
+
+.track > span {
+  transition: background-color 0.3s;
+}
+
+.marked {
+  display: grid;
+  gap: 8px;
+}
+
+/* Fills while the trainer waits to open the needle step (800 ms, as in Trainer). */
+.advance {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--teal);
+  transform-origin: left;
+  animation: fill 0.8s linear both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .body,
+  .home,
+  .mark,
+  .advance {
+    animation: none;
+  }
+
+  .track > span {
+    transition: none;
+  }
+}

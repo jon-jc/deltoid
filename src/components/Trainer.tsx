@@ -427,8 +427,11 @@ export default function Trainer() {
                 <CaseCard c={c} />
                 <p className={styles.prompt}>
                   {s.tap ? (
-                    <span role="status">
-                      Marked: <strong>{siteText(s.tap)}</strong>
+                    <span role="status" className={styles.marked}>
+                      <span>
+                        Marked: <strong>{siteText(s.tap)}</strong>. Opening the needle step…
+                      </span>
+                      <span className={styles.advance} aria-hidden="true" />
                     </span>
                   ) : (
                     <>
@@ -530,7 +533,9 @@ export default function Trainer() {
             )}
 
             <div className={styles.footer}>
-              {s.step === "site" && <p className={styles.hint}>The next step opens once you mark a site.</p>}
+              {s.step === "site" && (
+                <p className={styles.hint}>{s.tap ? " " : "The next step opens once you mark a site."}</p>
+              )}
               {s.step === "needle" && (
                 <button
                   type="button"
