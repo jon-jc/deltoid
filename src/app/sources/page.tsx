@@ -15,6 +15,11 @@ function readable(iso: string) {
   return `${MONTHS[m - 1]} ${d}, ${y}`;
 }
 
+/** The address without the scheme, for display. */
+function pretty(url: string) {
+  return url.replace(/^https?:\/\/(www\.)?/, "");
+}
+
 export default function SourcesPage() {
   const list = Object.values(SOURCES);
   return (
@@ -22,6 +27,9 @@ export default function SourcesPage() {
       <SiteHeader current="sources" />
       <main className="doc">
         <div className="doc-inner">
+          <Link href="/" className="top-link">
+            <span aria-hidden="true">←</span> Back to the trainer
+          </Link>
           <h1>Sources</h1>
           <p>
             Every site, needle length, gauge and angle in this trainer was read from the U.S. Centers for Disease Control
@@ -29,7 +37,7 @@ export default function SourcesPage() {
             Guidance changes, so check the current CDC page and the procedures of your employer before relying on any
             value.
           </p>
-          <ul className="source-list">
+          <ol className="source-list">
             {list.map((s) => (
               <li key={s.id} id={s.id}>
                 <h3>
@@ -37,31 +45,16 @@ export default function SourcesPage() {
                     {s.title}
                   </a>
                 </h3>
-                <dl>
-                  <div>
-                    <dt>Publisher</dt>
-                    <dd>{s.publisher}</dd>
-                  </div>
-                  <div>
-                    <dt>Date on source</dt>
-                    <dd>{s.published}</dd>
-                  </div>
-                  <div>
-                    <dt>Accessed</dt>
-                    <dd>{readable(s.accessed)}</dd>
-                  </div>
-                  <div>
-                    <dt>Link</dt>
-                    <dd>
-                      <a href={s.url} target="_blank" rel="noopener noreferrer">
-                        {s.url}
-                      </a>
-                    </dd>
-                  </div>
-                </dl>
+                <p className="source-meta">{s.publisher}</p>
+                <p className="source-meta">
+                  Dated {s.published} · Accessed {readable(s.accessed)}
+                </p>
+                <a className="source-url" href={s.url} target="_blank" rel="noopener noreferrer">
+                  {pretty(s.url)}
+                </a>
               </li>
             ))}
-          </ul>
+          </ol>
 
           <h2>Left out on purpose</h2>
           <p>Where CDC does not give a value, the trainer does not invent one.</p>

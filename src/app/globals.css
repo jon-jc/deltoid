@@ -198,51 +198,85 @@ button {
   margin-bottom: 0;
 }
 
-.source-list {
+.doc .source-list {
   list-style: none;
-  margin: 0;
+  margin: 16px 0 0;
   padding: 0;
   display: grid;
   gap: 12px;
+  counter-reset: source;
 }
 
-.source-list > li {
+.doc .source-list > li {
+  position: relative;
   margin: 0;
-  padding: 14px 16px;
+  padding: 14px 16px 14px 54px;
   border-radius: 14px;
   background: var(--paper-2);
   border: 1px solid var(--line);
   scroll-margin-top: 16px;
+  counter-increment: source;
+}
+
+/* Numbered badge for each source. */
+.doc .source-list > li::before {
+  content: counter(source);
+  position: absolute;
+  left: 14px;
+  top: 14px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--teal);
+  color: #fff;
+  font-size: 0.8125rem;
+  font-weight: 700;
 }
 
 .source-list h3 {
-  margin: 0 0 4px;
+  margin: 0 0 6px;
   font-size: 1rem;
   line-height: 1.35;
   font-weight: 650;
 }
 
-.source-list dl {
-  margin: 8px 0 0;
-  display: grid;
-  gap: 2px;
+.source-list h3 a {
+  text-underline-offset: 3px;
+}
+
+.doc .source-meta {
+  margin: 0;
   font-size: 0.875rem;
+  line-height: 1.45;
   color: var(--ink-2);
 }
 
-.source-list dl > div {
-  display: grid;
-  grid-template-columns: 6.5rem 1fr;
-  gap: 8px;
-}
-
-.source-list dt {
+.source-url {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 0.8125rem;
+  line-height: 1.4;
   color: var(--ink-3);
+  overflow-wrap: anywhere;
+  text-underline-offset: 2px;
 }
 
-.source-list dd {
-  margin: 0;
-  overflow-wrap: anywhere;
+.top-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  margin: -8px 0 8px;
+  font-size: 0.9375rem;
+  font-weight: 650;
+  text-underline-offset: 3px;
+  text-decoration: none;
+}
+
+.top-link:hover {
+  text-decoration: underline;
 }
 
 .back-link {
