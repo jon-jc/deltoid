@@ -315,6 +315,16 @@ export default function Trainer() {
         {s.screen === "home" && (
           <div className={styles.home}>
             <h1 className={styles.lead}>{COPY.tagline}</h1>
+            <ol className={styles.how} aria-label="How a case works">
+              {["Tap the site", "Pick a needle", "Set the angle", "See where it lands"].map((t, i) => (
+                <li key={t}>
+                  <span className={styles.howNum} aria-hidden="true">
+                    {i + 1}
+                  </span>
+                  {t}
+                </li>
+              ))}
+            </ol>
             <div className={styles.actions}>
               <button type="button" className={styles.primary} onClick={() => dispatch({ type: "start", demo: true })}>
                 Try a 30-second case
