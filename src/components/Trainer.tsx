@@ -215,6 +215,20 @@ function AnswerCard({ c }: { c: Case }) {
   );
 }
 
+/** A small drawing of the needle meeting the skin at the given angle. */
+function AngleGlyph({ deg }: { deg: number }) {
+  const r = (deg * Math.PI) / 180;
+  // the needle comes in from the upper right, as the syringe does in the cutaway
+  const x = 16 + Math.cos(r) * 18;
+  const y = 20 - Math.sin(r) * 18;
+  return (
+    <svg className={styles.angleGlyph} viewBox="0 0 40 24" aria-hidden="true">
+      <path className={styles.angleSkin} d="M2 20.5h36" />
+      <path className={styles.angleNeedle} d={`M${x.toFixed(1)} ${y.toFixed(1)}L16 20`} />
+    </svg>
+  );
+}
+
 function siteText(tap: Tap) {
   if (tap.site) return `${SITES[tap.site].label}, ${tap.side === "L" ? "left" : "right"} side`;
   const r = REGIONS[tap.region] ?? REGIONS.Body;
@@ -458,7 +472,10 @@ export default function Trainer() {
                         aria-pressed={s.needle === id}
                         onClick={() => dispatch({ type: "needle", id })}
                       >
-                        {NEEDLES[id].label}
+                        <span>{NEEDLES[id].label}</span>
+                        <span className={styles.segmentSub} aria-hidden="true">
+                          {id === "tb" ? "tuberculin" : NEEDLES[id].mmLabel}
+                        </span>
                       </button>
                     ))}
                   </div>
@@ -474,7 +491,8 @@ export default function Trainer() {
                         aria-pressed={s.angle === id}
                         onClick={() => dispatch({ type: "angle", id })}
                       >
-                        {ANGLES[id].label}
+                        <AngleGlyph deg={ANGLES[id].drawDeg} />
+                        <span>{ANGLES[id].label}</span>
                       </button>
                     ))}
                   </div>
