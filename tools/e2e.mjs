@@ -286,10 +286,14 @@ async function desktop(browser) {
   }
   await page.getByText(/of 10 correct/).waitFor({ timeout: 5000 });
   const review = await page.locator('[class*="panel"]').innerText();
-  log("review:", review.split("\n")[0]);
+  log("review:", review.split("\n").slice(0, 3).join(" / "));
   check(/CDC's answer/.test(review) && /Source/.test(review), "review lists each miss with the CDC answer and its source");
   await page.waitForTimeout(800);
   await page.screenshot({ path: join(OUT, "desktop-5-review.png") });
+  check(/Off: needle length/.test(review), "review lists every case with what was off");
+  await page.getByRole("button", { name: /^Practice the \d+ missed cases$/ }).click();
+  const missed = await page.getByText(/^Missed case 1 of 5/).waitFor({ timeout: 5000 }).then(() => true, () => false);
+  check(missed, "Practice the missed cases starts a round of just the misses");
   check(errors.length === 0, `no page errors ${errors.length ? JSON.stringify(errors.slice(0, 3)) : ""}`);
   await ctx.close();
 }

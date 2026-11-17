@@ -45,6 +45,9 @@ interface Attempt {
 interface State {
   screen: "home" | "case" | "review";
   demo: boolean;
+  /** the cases in this round, as indexes into CASES */
+  queue: number[];
+  /** position in the queue */
   index: number;
   step: "site" | "needle" | "result";
   tap: Tap | null;
@@ -58,7 +61,7 @@ interface State {
 }
 
 type Action =
-  | { type: "start"; demo: boolean }
+  | { type: "start"; demo: boolean; queue?: number[] }
   | { type: "home" }
   | { type: "tap"; tap: Tap }
   | { type: "toNeedle" }
@@ -71,9 +74,12 @@ type Action =
   | { type: "landmarks" }
   | { type: "view"; name: ViewName };
 
+const ALL_CASES = CASES.map((_, i) => i);
+
 const INITIAL: State = {
   screen: "home",
   demo: false,
+  queue: ALL_CASES,
   index: 0,
   step: "site",
   tap: null,
@@ -99,7 +105,7 @@ const freshCase = {
 function reducer(s: State, a: Action): State {
   switch (a.type) {
     case "start":
-      return { ...INITIAL, screen: "case", demo: a.demo, view: { name: "case", nonce: s.view.nonce } };
+      return { ...INITIAL, screen: "case", demo: a.demo, queue: a.queue ?? ALL_CASES, view: { name: "case", nonce: s.view.nonce } };
     case "home":
       return { ...INITIAL, view: { name: "case", nonce: s.view.nonce } };
     case "tap":
@@ -114,7 +120,7 @@ function reducer(s: State, a: Action): State {
       return s.step === "needle" ? { ...s, angle: a.id } : s;
     case "check": {
       if (s.step !== "needle" || !s.tap || !s.needle || !s.angle) return s;
-      const c = CASES[s.index];
+      const c = CASES[s.queue[s.index]];
       const pick: Pick = { site: s.tap.site, side: s.tap.side, region: s.tap.region, needle: s.needle, angle: s.angle };
       return {
         ...s,
@@ -128,7 +134,7 @@ function reducer(s: State, a: Action): State {
     case "retry":
       return s.step === "result" ? { ...s, ...freshCase, retrying: true, view: { name: "case", nonce: s.view.nonce + 1 } } : s;
     case "next":
-      if (s.index + 1 >= CASES.length) return { ...s, screen: "review", ...freshCase };
+      if (s.index + 1 >= s.queue.length) return { ...s, screen: "review", ...freshCase };
       return { ...s, index: s.index + 1, ...freshCase };
     case "landmarks":
       return { ...s, landmarks: !s.landmarks, usedLandmarks: s.usedLandmarks || !s.landmarks };
@@ -215,6 +221,8 @@ function siteText(tap: Tap) {
   return r.charAt(0).toUpperCase() + r.slice(1);
 }
 
+const PART_NAMES = { site: "site", angle: "angle", length: "needle length" } as const;
+
 const STEPS = [
   { id: "site", label: "Site" },
   { id: "needle", label: "Needle and angle" },
@@ -238,11 +246,11 @@ function Stepper({ step }: { step: State["step"] }) {
 }
 
 /** One bar per case: green for correct, red for a miss, dark for the case in hand. */
-function ScoreTrack({ attempts, index }: { attempts: Attempt[]; index: number }) {
+function ScoreTrack({ cases, attempts, index }: { cases: Case[]; attempts: Attempt[]; index: number }) {
   const correct = attempts.filter((a) => a.result.correct).length;
   return (
     <span className={styles.track} role="img" aria-label={`${correct} of ${attempts.length} correct so far`}>
-      {CASES.map((x, i) => {
+      {cases.map((x, i) => {
         const a = attempts.find((t) => t.caseId === x.id);
         const state = a ? (a.result.correct ? "ok" : "miss") : i === index ? "now" : "next";
         return <span key={x.id} data-state={state} />;
@@ -264,10 +272,14 @@ export default function Trainer() {
   const [s, dispatch] = useReducer(reducer, INITIAL);
   const stage = useRef<StageHandle>(null);
   const panel = useRef<HTMLDivElement>(null);
-  const c = CASES[s.index];
+  const round = s.queue.map((i) => CASES[i]);
+  const c = round[s.index];
+  const missedRound = s.queue.length < CASES.length;
   const scored = s.attempts.filter((a) => a.scored);
   const correctCount = scored.filter((a) => a.result.correct).length;
   const last = s.attempts[s.attempts.length - 1];
+  const misses = scored.filter((a) => !a.result.correct);
+  const missedQueue = misses.map((a) => CASES.findIndex((x) => x.id === a.caseId));
 
   // after a tap, let the learner see where it landed, then move to the needle step
   useEffect(() => {
@@ -384,10 +396,12 @@ export default function Trainer() {
           <>
             <div className={styles.progress}>
               <span className={styles.progressLabel}>
-                {s.demo && s.index === 0 ? "30-second case" : `Case ${s.index + 1} of ${CASES.length}`}
+                {s.demo && s.index === 0
+                  ? "30-second case"
+                  : `${missedRound ? "Missed case" : "Case"} ${s.index + 1} of ${round.length}`}
                 {scored.length > 0 && <span className={styles.muted}> · {correctCount} correct</span>}
               </span>
-              {!(s.demo && s.index === 0) && <ScoreTrack attempts={scored} index={s.index} />}
+              {!(s.demo && s.index === 0) && <ScoreTrack cases={round} attempts={scored} index={s.index} />}
               <button type="button" className={styles.linkBtn} onClick={() => dispatch({ type: "home" })}>
                 Start over
               </button>
@@ -517,7 +531,7 @@ export default function Trainer() {
                     </button>
                   )}
                   <button type="button" className={styles.primary} onClick={() => dispatch({ type: "next" })}>
-                    {s.index + 1 >= CASES.length ? "See review" : "Next case"}
+                    {s.index + 1 >= round.length ? "See review" : "Next case"}
                   </button>
                 </div>
               )}
@@ -527,52 +541,85 @@ export default function Trainer() {
 
         {s.screen === "review" && (
           <>
+            <div className={styles.progress}>
+              <span className={styles.progressLabel}>{missedRound ? "Review of missed cases" : "Review"}</span>
+              <button type="button" className={styles.linkBtn} onClick={() => dispatch({ type: "home" })}>
+                Back to start
+              </button>
+            </div>
             <div className={styles.body}>
               <h1 className={styles.lead}>
                 {correctCount} of {scored.length} correct
               </h1>
-              {scored.every((a) => a.result.correct) ? (
+              <ol className={styles.tally} aria-label="Every case in this round">
+                {scored.map((a) => {
+                  const rc = CASES.find((x) => x.id === a.caseId) as Case;
+                  const off = a.result.findings.filter((f) => !f.ok).map((f) => PART_NAMES[f.part]);
+                  return (
+                    <li key={a.caseId} data-ok={a.result.correct ? "1" : "0"}>
+                      <span className={styles.tallyMark} aria-hidden="true">
+                        {a.result.correct ? "✓" : "✕"}
+                      </span>
+                      <span>
+                        <span className={styles.tallyTitle}>{rc.title}</span>
+                        <span className={styles.tallyNote}>
+                          {a.result.correct ? "Correct" : `Off: ${off.join(", ")}`}
+                        </span>
+                      </span>
+                    </li>
+                  );
+                })}
+              </ol>
+              {misses.length === 0 ? (
                 <p className={styles.summary}>No misses. Every answer matched CDC guidance.</p>
               ) : (
                 <>
-                  <p className={styles.summary}>Each miss, with the answer CDC gives and where it comes from.</p>
+                  <h2 className={styles.subhead}>Each miss, with CDC&apos;s answer</h2>
                   <ol className={styles.review}>
-                    {scored
-                      .filter((a) => !a.result.correct)
-                      .map((a) => {
-                        const rc = CASES.find((x) => x.id === a.caseId) as Case;
-                        const ans = correctAnswer(rc);
-                        return (
-                          <li key={a.caseId}>
-                            <h2>{rc.title}</h2>
-                            <p className={styles.muted}>{rc.patient}{rc.constraint ? `. ${rc.constraint}` : ""}</p>
-                            <p>{a.result.summary}</p>
-                            <ul className={styles.findings}>
-                              {a.result.findings
-                                .filter((f) => !f.ok)
-                                .map((f) => (
-                                  <li key={f.part} data-ok="0">
-                                    <span aria-hidden="true">✕</span>
-                                    <span>{f.text}</span>
-                                  </li>
-                                ))}
-                            </ul>
-                            <AnswerCard c={rc} />
-                            <SourceLinks ids={ans.sources} />
-                          </li>
-                        );
-                      })}
+                    {misses.map((a) => {
+                      const rc = CASES.find((x) => x.id === a.caseId) as Case;
+                      const ans = correctAnswer(rc);
+                      return (
+                        <li key={a.caseId}>
+                          <h3>{rc.title}</h3>
+                          <p className={styles.muted}>{rc.patient}{rc.constraint ? `. ${rc.constraint}` : ""}</p>
+                          <p>{a.result.summary}</p>
+                          <AnswerCard c={rc} />
+                          <ul className={styles.findings}>
+                            {a.result.findings
+                              .filter((f) => !f.ok)
+                              .map((f) => (
+                                <li key={f.part} data-ok="0">
+                                  <span aria-hidden="true">✕</span>
+                                  <span>{f.text}</span>
+                                </li>
+                              ))}
+                          </ul>
+                          <SourceLinks ids={ans.sources} />
+                        </li>
+                      );
+                    })}
                   </ol>
                 </>
               )}
               <p className={styles.fine}>{COPY.educational}</p>
             </div>
             <div className={styles.footer}>
-              <button type="button" className={styles.primary} onClick={() => dispatch({ type: "start", demo: false })}>
-                Practice again
-              </button>
-              <button type="button" className={styles.secondary} onClick={() => dispatch({ type: "home" })}>
-                Back to start
+              {misses.length > 0 && (
+                <button
+                  type="button"
+                  className={styles.primary}
+                  onClick={() => dispatch({ type: "start", demo: false, queue: missedQueue })}
+                >
+                  Practice the {misses.length === 1 ? "missed case" : `${misses.length} missed cases`}
+                </button>
+              )}
+              <button
+                type="button"
+                className={misses.length > 0 ? styles.secondary : styles.primary}
+                onClick={() => dispatch({ type: "start", demo: false })}
+              >
+                {misses.length > 0 ? "Practice all cases again" : "Practice again"}
               </button>
             </div>
           </>
