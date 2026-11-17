@@ -214,6 +214,14 @@ async function phone(browser) {
   log("feedback:", summary);
   check(/ended in/.test(summary) && /site|angle|needle/.test(summary), "feedback names the tissue and what was off");
   await page.screenshot({ path: join(OUT, "phone-10-miss.png"), fullPage: false });
+  check(await page.getByText("CDC's answer").isVisible(), "a miss shows CDC's answer");
+
+  // a second try is graded but leaves the score alone
+  const before = await page.locator('[class*="progressLabel"]').innerText();
+  await tapText(page, "Try again");
+  await page.getByText("Tap the injection site").waitFor({ timeout: 5000 });
+  const after = await page.locator('[class*="progressLabel"]').innerText();
+  check(before === after, `Try again returns to the site step and keeps the score (${after})`);
 
   // the infant thigh, found from its landmarks, is accepted on the following infant case
   void gt;
@@ -279,7 +287,7 @@ async function desktop(browser) {
   await page.getByText(/of 10 correct/).waitFor({ timeout: 5000 });
   const review = await page.locator('[class*="panel"]').innerText();
   log("review:", review.split("\n")[0]);
-  check(/CDC:/.test(review) && /Source/.test(review), "review lists each miss with the CDC answer and its source");
+  check(/CDC's answer/.test(review) && /Source/.test(review), "review lists each miss with the CDC answer and its source");
   await page.waitForTimeout(800);
   await page.screenshot({ path: join(OUT, "desktop-5-review.png") });
   check(errors.length === 0, `no page errors ${errors.length ? JSON.stringify(errors.slice(0, 3)) : ""}`);
