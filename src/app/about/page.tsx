@@ -14,6 +14,9 @@ export default function AboutPage() {
       <SiteHeader current="about" />
       <main className="doc">
         <div className="doc-inner">
+          <Link href="/" className="top-link">
+            <span aria-hidden="true">←</span> Back to the trainer
+          </Link>
           <h1>About Deltoid</h1>
           <p>
             Deltoid is a practice tool for medical assistants. Each case gives you a synthetic patient and a route. You
