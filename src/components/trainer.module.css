@@ -30,30 +30,79 @@
   pointer-events: auto;
 }
 
+/* Camera views: one segmented pill, the current view filled. */
 .views {
   display: flex;
-  gap: 5px;
+  padding: 3px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: rgba(250, 248, 242, 0.94);
+  box-shadow: 0 1px 2px rgba(28, 42, 43, 0.08);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+.view {
+  min-height: 40px;
+  min-width: 44px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.view[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--paper);
 }
 
 .chip {
-  min-height: 44px;
+  min-height: 46px;
   min-width: 44px;
-  padding: 0 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 13px 0 10px;
   border-radius: 999px;
   border: 1px solid var(--line-strong);
-  background: rgba(250, 248, 242, 0.92);
+  background: rgba(250, 248, 242, 0.94);
+  box-shadow: 0 1px 2px rgba(28, 42, 43, 0.08);
   color: var(--ink);
   font: inherit;
   font-size: 0.875rem;
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
 }
 
 .chip[aria-pressed="true"] {
   background: var(--teal);
   border-color: var(--teal);
   color: #fff;
+}
+
+.chipIcon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 1.4;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chip,
+  .view {
+    transition: none;
+  }
 }
 
 .panel {
@@ -141,6 +190,99 @@
   color: var(--ink-2);
   border-bottom: 1px solid var(--line);
   font-variant-numeric: tabular-nums;
+}
+
+.progressLabel {
+  white-space: nowrap;
+}
+
+.progressLabel .muted {
+  font-size: inherit;
+  font-weight: 500;
+}
+
+/* One bar per case. */
+.track {
+  flex: 1;
+  max-width: 220px;
+  display: flex;
+  gap: 3px;
+}
+
+.track > span {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--line);
+}
+
+.track > [data-state="ok"] {
+  background: var(--good);
+}
+
+.track > [data-state="miss"] {
+  background: var(--bad);
+}
+
+.track > [data-state="now"] {
+  background: var(--ink-3);
+}
+
+/* Where the learner is inside a case. */
+.stepper {
+  flex: none;
+  margin: 0;
+  padding: 10px max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+
+.stepper li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.stepper li + li::before {
+  content: "";
+  width: 14px;
+  height: 1.5px;
+  background: var(--line-strong);
+}
+
+.stepDot {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid var(--line-strong);
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.stepper [data-state="now"] {
+  color: var(--ink);
+}
+
+.stepper [data-state="now"] .stepDot {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+
+.stepper [data-state="done"] .stepDot {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: #fff;
 }
 
 .linkBtn {
@@ -463,12 +605,14 @@
 /* Narrow phones: keep all five chips on one row. */
 @media (max-width: 379px) {
   .chip {
-    padding: 0 8px;
+    padding: 0 9px 0 7px;
+    gap: 4px;
     font-size: 0.8125rem;
   }
 
-  .views {
-    gap: 4px;
+  .view {
+    padding: 0 7px;
+    font-size: 0.8125rem;
   }
 
   .stageBar {
@@ -521,5 +665,9 @@
 
   .progress {
     padding: 0 24px;
+  }
+
+  .stepper {
+    padding: 14px 24px 0;
   }
 }

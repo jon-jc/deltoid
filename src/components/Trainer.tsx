@@ -173,6 +173,42 @@ function siteText(tap: Tap) {
   return r.charAt(0).toUpperCase() + r.slice(1);
 }
 
+const STEPS = [
+  { id: "site", label: "Site" },
+  { id: "needle", label: "Needle and angle" },
+  { id: "result", label: "Result" },
+] as const;
+
+function Stepper({ step }: { step: State["step"] }) {
+  const at = STEPS.findIndex((x) => x.id === step);
+  return (
+    <ol className={styles.stepper} aria-label={`Step ${at + 1} of ${STEPS.length}`}>
+      {STEPS.map((x, i) => (
+        <li key={x.id} data-state={i < at ? "done" : i === at ? "now" : "next"} aria-current={i === at ? "step" : undefined}>
+          <span className={styles.stepDot} aria-hidden="true">
+            {i < at ? "✓" : i + 1}
+          </span>
+          <span className={styles.stepLabel}>{x.label}</span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/** One bar per case: green for correct, red for a miss, dark for the case in hand. */
+function ScoreTrack({ attempts, index }: { attempts: Attempt[]; index: number }) {
+  const correct = attempts.filter((a) => a.result.correct).length;
+  return (
+    <span className={styles.track} role="img" aria-label={`${correct} of ${attempts.length} correct so far`}>
+      {CASES.map((x, i) => {
+        const a = attempts.find((t) => t.caseId === x.id);
+        const state = a ? (a.result.correct ? "ok" : "miss") : i === index ? "now" : "next";
+        return <span key={x.id} data-state={state} />;
+      })}
+    </span>
+  );
+}
+
 const VIEWS: { name: ViewName; label: string }[] = [
   { name: "case", label: "Body" },
   { name: "arm", label: "Arm" },
@@ -250,11 +286,23 @@ export default function Trainer() {
               aria-pressed={s.landmarks}
               onClick={() => dispatch({ type: "landmarks" })}
             >
+              <svg className={styles.chipIcon} viewBox="0 0 20 20" aria-hidden="true">
+                <circle cx="10" cy="5" r="2.2" />
+                <circle cx="5" cy="14.5" r="2.2" />
+                <circle cx="15" cy="14.5" r="2.2" />
+                <path d="M10 7.2 5.8 12.4M10 7.2l4.2 5.2M7.2 14.5h5.6" />
+              </svg>
               {s.landmarks ? "Hide landmarks" : "Show landmarks"}
             </button>
             <div className={styles.views} role="group" aria-label="Camera view">
               {VIEWS.map((v) => (
-                <button key={v.name} type="button" className={styles.chip} onClick={() => dispatch({ type: "view", name: v.name })}>
+                <button
+                  key={v.name}
+                  type="button"
+                  className={styles.view}
+                  aria-pressed={s.view.name === v.name}
+                  onClick={() => dispatch({ type: "view", name: v.name })}
+                >
                   {v.label}
                 </button>
               ))}
@@ -282,16 +330,16 @@ export default function Trainer() {
         {s.screen === "case" && (
           <>
             <div className={styles.progress}>
-              <span>
+              <span className={styles.progressLabel}>
                 {s.demo && s.index === 0 ? "30-second case" : `Case ${s.index + 1} of ${CASES.length}`}
+                {s.attempts.length > 0 && <span className={styles.muted}> · {correctCount} correct</span>}
               </span>
-              <span>
-                {s.attempts.length > 0 && `${correctCount} of ${s.attempts.length} correct · `}
-                <button type="button" className={styles.linkBtn} onClick={() => dispatch({ type: "home" })}>
-                  Start over
-                </button>
-              </span>
+              {!(s.demo && s.index === 0) && <ScoreTrack attempts={s.attempts} index={s.index} />}
+              <button type="button" className={styles.linkBtn} onClick={() => dispatch({ type: "home" })}>
+                Start over
+              </button>
             </div>
+            <Stepper step={s.step} />
 
             {s.step === "site" && (
               <div className={styles.body}>
