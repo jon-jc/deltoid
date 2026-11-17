@@ -480,6 +480,51 @@
   cursor: pointer;
 }
 
+.segment {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  line-height: 1.15;
+}
+
+.segmentSub {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--ink-3);
+}
+
+.segment[aria-pressed="true"] .segmentSub {
+  color: rgba(243, 240, 232, 0.78);
+}
+
+.angleGlyph {
+  width: 34px;
+  height: 20px;
+  margin-bottom: 2px;
+}
+
+.angleSkin {
+  stroke: var(--line-strong);
+  stroke-width: 2;
+}
+
+.angleNeedle {
+  stroke: var(--teal);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+
+.segment[aria-pressed="true"] .angleSkin {
+  stroke: rgba(243, 240, 232, 0.5);
+}
+
+.segment[aria-pressed="true"] .angleNeedle {
+  stroke: #7fd0c6;
+}
+
 .segments[data-count="5"] .segment {
   font-size: 0.9375rem;
 }
