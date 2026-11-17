@@ -5,19 +5,24 @@ A 3D injection site trainer for medical assistants. Pick the route, tap the site
 **Live:** https://deltoid-eight.vercel.app (no login; opens on a phone)
 
 <p>
-  <img src="docs/phone-home.png" alt="First screen: a 3D patient, one sentence and two buttons" width="24%">
+  <img src="docs/phone-home.png" alt="First screen: a 3D patient, one sentence, the four steps of a case and two buttons" width="24%">
   <img src="docs/phone-landmarks.png" alt="Landmarks switched on: skeleton, muscles and injection areas under the skin" width="24%">
-  <img src="docs/phone-cutaway.png" alt="Needle and angle controls with the tissue cutaway" width="24%">
+  <img src="docs/phone-cutaway.png" alt="Needle and angle controls with the tissue cutaway, the needle tip in muscle" width="24%">
   <img src="docs/phone-result.png" alt="Result: correct, with the tissue reached and the CDC source" width="24%">
 </p>
 
 ## What it does
 
-- **A 30-second case.** One synthetic patient, four taps: the site, the needle length, the angle, and "Check answer".
-- **Practice mode.** Ten cases mixing adults and infants across intramuscular, subcutaneous and intradermal routes, with a running score and a review of each miss.
-- **Specific feedback.** The result says which tissue the needle ended in and what was off (site, angle or needle length), with a link to the CDC page it comes from.
+- **A 30-second case.** One synthetic patient, four taps: the site, the needle length, the angle, and "Check answer". The first screen shows those four steps before you start.
+- **Practice mode.** Ten cases mixing adults and infants across intramuscular, subcutaneous and intradermal routes. A bar per case tracks correct and missed answers, and a step indicator shows where you are inside a case.
+- **Specific feedback.** The result says which tissue the needle ended in and what was off (site, angle or needle length), with a link to the CDC page it comes from. After a miss it shows CDC's answer (site, needle, angle) straight away.
+- **Learn from misses.** "Try again" reruns a missed case without changing the score. The review lists every case, explains each miss, and offers a round of just the missed cases.
 - **Landmarks on demand.** "Show landmarks" makes the skin translucent and reveals the skeleton, the injection muscles and the labelled bony landmarks: acromion, greater trochanter, iliac crest, anterior superior iliac spine, and the thirds of the thigh.
 - **Phone first.** Tap to select, drag to turn, pinch to zoom. A tap is told from a drag by how far the finger moved, not by time. Controls are at least 44 px and sit in the lower half of the screen.
+
+<p>
+  <img src="docs/desktop-review.png" alt="Desktop: the review lists every case with what was off, and offers a round of the missed cases" width="80%">
+</p>
 
 No backend, no account, no cookies, no analytics. Progress lives in memory and is gone on reload.
 
@@ -81,7 +86,7 @@ Export is glTF binary, Y up, transforms applied, in metres, then meshopt compres
 - Next.js (App Router, TypeScript), statically rendered, deployed on Vercel
 - three.js, loaded after first paint; device pixel ratio capped at 2; frames drawn only when something changes
 - Atkinson Hyperlegible Next, self-hosted
-- Lighthouse mobile on the live site: performance 97, accessibility 98, best practices 100
+- Lighthouse mobile on the live site (16 November 2026): performance 98, accessibility 100, best practices 100
 
 ## Run it locally
 
@@ -96,7 +101,7 @@ Other scripts:
 | --- | --- |
 | `npm run build` | Production build |
 | `npm run lint` | ESLint |
-| `npm run e2e -- http://localhost:3000` | Scripted run with real touch input on a 390x844 screen (needs Edge or Chrome installed): the 30-second case, a drag and a pinch that must not place a site, a small phone, reduced motion, no WebGL, and a full practice run |
+| `npm run e2e -- http://localhost:3000` | Scripted run with real touch input on a 390x844 screen (needs Edge or Chrome installed): the 30-second case, a drag and a pinch that must not place a site, Try again after a miss, a small phone, reduced motion, no WebGL, and a full practice run with its review and a round of the missed cases |
 | `npm run models:compress` | Recompress the Blender exports into `public/models` and check the size budget |
 
 To rebuild the models, open Blender, add `assets/blender/scripts` to the Python path and run `build_patient.build("adult")`, `build_patient.build("infant")`, `build_tissue.build()`, `build_syringe.build()` and `export_all.run(...)`.
