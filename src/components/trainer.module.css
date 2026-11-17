@@ -598,6 +598,73 @@
   text-align: center;
 }
 
+/* Every case in the round, one line each. */
+.tally {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--paper-2);
+  overflow: hidden;
+}
+
+.tally li {
+  display: grid;
+  grid-template-columns: 26px 1fr;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 6px 14px;
+  font-size: 0.9375rem;
+  line-height: 1.3;
+}
+
+.tally li + li {
+  border-top: 1px solid var(--line);
+}
+
+.tallyMark {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.tally [data-ok="1"] .tallyMark {
+  background: var(--good);
+}
+
+.tally [data-ok="0"] .tallyMark {
+  background: var(--bad);
+}
+
+.tallyTitle {
+  display: block;
+  font-weight: 600;
+}
+
+.tallyNote {
+  font-size: 0.8125rem;
+  display: block;
+  color: var(--ink-3);
+}
+
+.tally [data-ok="0"] .tallyNote {
+  color: var(--bad-ink);
+}
+
+.subhead {
+  margin: 6px 0 0;
+  font-size: 1.0625rem;
+  line-height: 1.3;
+  font-weight: 650;
+}
+
 .review {
   margin: 0;
   padding: 0;
@@ -617,7 +684,7 @@
   line-height: 1.42;
 }
 
-.review h2 {
+.review h3 {
   margin: 0;
   font-size: 1.0625rem;
   line-height: 1.25;
