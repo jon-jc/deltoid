@@ -191,27 +191,45 @@ function CaseCard({ c, compact }: { c: Case; compact?: boolean }) {
   );
 }
 
-/** CDC's answer for a case, shown after a miss. */
-function AnswerCard({ c }: { c: Case }) {
+/** What the learner chose beside CDC's answer, part by part. Shown after a miss. */
+function AnswerCard({ c, pick, result }: { c: Case; pick: Pick; result: Result }) {
   const ans = correctAnswer(c);
+  const region = REGIONS[pick.region] ?? REGIONS.Body;
+  const ok = (part: "site" | "length" | "angle") => result.findings.find((f) => f.part === part)?.ok ?? false;
+  const rows = [
+    { label: "Site", ok: ok("site"), yours: pick.site ? SITES[pick.site].label : region.charAt(0).toUpperCase() + region.slice(1), cdc: ans.site },
+    { label: "Needle", ok: ok("length"), yours: NEEDLES[pick.needle].label, cdc: ans.needle },
+    { label: "Angle", ok: ok("angle"), yours: ANGLES[pick.angle].label, cdc: ans.angle },
+  ];
   return (
-    <div className={styles.answerCard}>
-      <h3>CDC&apos;s answer</h3>
-      <dl>
-        <div>
-          <dt>Site</dt>
-          <dd>{ans.site}</dd>
-        </div>
-        <div>
-          <dt>Needle</dt>
-          <dd>{ans.needle}</dd>
-        </div>
-        <div>
-          <dt>Angle</dt>
-          <dd>{ans.angle}</dd>
-        </div>
-      </dl>
-    </div>
+    <table className={styles.answerCard}>
+      <thead>
+        <tr>
+          <td />
+          <th scope="col">You chose</th>
+          <th scope="col">CDC&apos;s answer</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r) => (
+          <tr key={r.label} data-ok={r.ok ? "1" : "0"}>
+            <th scope="row">{r.label}</th>
+            <td>
+              <span className={styles.answerYours}>
+                <span className={styles.answerMark} aria-hidden="true">
+                  {r.ok ? "✓" : "✕"}
+                </span>
+                <span>
+                  <span className={styles.srOnly}>{r.ok ? "Right: " : "Off: "}</span>
+                  {r.yours}
+                </span>
+              </span>
+            </td>
+            <td>{r.cdc}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
 
@@ -514,7 +532,7 @@ export default function Trainer() {
                 <p className={styles.summary} role="status">
                   {last.result.summary}
                 </p>
-                {!last.result.correct && <AnswerCard c={c} />}
+                {!last.result.correct && <AnswerCard c={c} pick={last.pick} result={last.result} />}
                 <ul className={styles.findings}>
                   {last.result.findings.map((f) => (
                     <li key={f.part} data-ok={f.ok ? "1" : "0"}>
@@ -607,7 +625,7 @@ export default function Trainer() {
                           <h3>{rc.title}</h3>
                           <p className={styles.muted}>{rc.patient}{rc.constraint ? `. ${rc.constraint}` : ""}</p>
                           <p>{a.result.summary}</p>
-                          <AnswerCard c={rc} />
+                          <AnswerCard c={rc} pick={a.pick} result={a.result} />
                           <ul className={styles.findings}>
                             {a.result.findings
                               .filter((f) => !f.ok)
