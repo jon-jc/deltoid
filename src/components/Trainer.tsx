@@ -80,6 +80,17 @@ type Action =
 
 const ALL_CASES = CASES.map((_, i) => i);
 
+/** Every case in a fresh random order that opens on a different case from the last round. */
+function newOrder(last: number[]): number[] {
+  const q = [...ALL_CASES];
+  for (let i = q.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [q[i], q[j]] = [q[j], q[i]];
+  }
+  if (q[0] === last[0]) q.push(q.shift() as number);
+  return q;
+}
+
 const INITIAL: State = {
   screen: "home",
   demo: false,
@@ -708,9 +719,9 @@ export default function Trainer() {
               <button
                 type="button"
                 className={misses.length > 0 ? styles.secondary : styles.primary}
-                onClick={() => dispatch({ type: "start", demo: false })}
+                onClick={() => dispatch({ type: "start", demo: false, queue: newOrder(s.queue) })}
               >
-                {misses.length > 0 ? "Practice all cases again" : "Practice again"}
+                {misses.length > 0 ? "Practice all cases in a new order" : "Practice again in a new order"}
               </button>
             </div>
           </>
