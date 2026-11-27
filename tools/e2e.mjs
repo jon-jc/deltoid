@@ -170,8 +170,11 @@ async function phone(browser) {
   await page.screenshot({ path: join(OUT, "phone-6-cutaway.png") });
 
   // taps 2 and 3: needle and angle
+  const waiting = page.getByRole("button", { name: "Pick a needle and an angle" });
+  check(await waiting.isDisabled(), "before any choice, the check button says what it is waiting for");
   await tapText(page, "1 in");
   taps++;
+  check(await page.getByRole("button", { name: "Now pick an angle" }).isDisabled(), "after the needle, it asks for the angle");
   await tapText(page, "90°");
   taps++;
   await page.waitForTimeout(1500);
