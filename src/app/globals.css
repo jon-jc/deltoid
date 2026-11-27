@@ -19,7 +19,59 @@
   --stage-hi: #fbfaf6;
   --stage-mid: #eeeae0;
   --stage-lo: #dedacd;
+  /* the cutaway sits on a slightly brighter ground than the patient */
+  --cut-hi: #fdfcf8;
+  --cut-mid: #f1ede3;
+  --cut-lo: #e4dfd2;
+  /* labels and controls drawn over the 3D view */
+  --glass: rgba(250, 248, 242, 0.92);
+  --glass-solid: #faf8f2;
+  --shadow: 0 1px 2px rgba(28, 42, 43, 0.08);
+  /* text on a teal, amber, green or red fill */
+  --on-accent: #fff;
+  /* details on the ink fill of a selected control */
+  --on-ink-2: rgba(243, 240, 232, 0.78);
+  --on-ink-line: rgba(243, 240, 232, 0.5);
+  --on-ink-accent: #7fd0c6;
+  --paper-0: rgba(243, 240, 232, 0);
+  color-scheme: light;
   --font-body: var(--font-atkinson), system-ui, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Dark theme, following the device setting. Fills keep white text; "ink" accents turn light. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #131a1b;
+    --paper-2: #1b2526;
+    --paper-3: #263233;
+    --ink: #ebe8de;
+    --ink-2: #bcc5c3;
+    --ink-3: #9aa6a4;
+    --line: #2d3b3c;
+    --line-strong: #4d6061;
+    --teal: #1f7a72;
+    --teal-ink: #7fd0c6;
+    --amber: #b25a1c;
+    --amber-ink: #f2ab6c;
+    --good: #1f7a72;
+    --good-ink: #7fd0c6;
+    --bad: #b5452f;
+    --bad-ink: #f29d8f;
+    --stage-hi: #2b3839;
+    --stage-mid: #1e292a;
+    --stage-lo: #131a1b;
+    --cut-hi: #2f3c3d;
+    --cut-mid: #202b2c;
+    --cut-lo: #141b1c;
+    --glass: rgba(27, 37, 38, 0.92);
+    --glass-solid: #1b2526;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --on-ink-2: rgba(19, 26, 27, 0.74);
+    --on-ink-line: rgba(19, 26, 27, 0.4);
+    --on-ink-accent: #14534d;
+    --paper-0: rgba(19, 26, 27, 0);
+    color-scheme: dark;
+  }
 }
 
 *,
@@ -129,7 +181,7 @@ button {
   line-height: 18px;
   white-space: nowrap;
   color: var(--ink);
-  background: rgba(250, 248, 242, 0.9);
+  background: var(--glass);
   border: 1px solid var(--line-strong);
   opacity: 0;
   will-change: transform;
@@ -230,7 +282,7 @@ button {
   display: grid;
   place-items: center;
   background: var(--teal);
-  color: #fff;
+  color: var(--on-accent);
   font-size: 0.8125rem;
   font-weight: 700;
 }
