@@ -10,6 +10,11 @@ A 3D injection site trainer for medical assistants. Pick the route, tap the site
   <img src="docs/phone-cutaway.png" alt="Needle and angle controls with the tissue cutaway, the needle tip in muscle" width="24%">
   <img src="docs/phone-result.png" alt="Result: correct, with the tissue reached and the CDC source" width="24%">
 </p>
+<p>
+  <img src="docs/phone-miss.png" alt="After a miss: what you chose beside CDC's answer for the site, needle and angle" width="24%">
+  <img src="docs/phone-site-on-patient.png" alt="CDC's site shown on the patient with landmarks, and the learner's tap marked" width="24%">
+  <img src="docs/phone-dark.png" alt="Dark theme: needle and angle chosen, the tip in fat" width="24%">
+</p>
 
 ## Important
 
@@ -31,19 +36,22 @@ Those rules are spread across several CDC job aids, tables and guidelines. Delto
 
 1. **Read the case card.** It names the patient (for example "Man, 47 years, 100 kg (220 lb)"), the scenario and the route, with the route explained in plain words ("into the muscle"). Some cases add a constraint, such as "Neither upper arm can be used today."
 2. **Tap the site.** The camera starts on the body. Body, Arm, Thigh and Hip buttons move it, and you can drag to turn and pinch to zoom. "Show landmarks" makes the skin translucent and shows the bones, muscles and labelled bony points underneath. When you tap, a marker drops on the skin and the panel names what you tapped. A short bar fills, then the needle step opens. If the 3D view is hard to use, "Choose the site from a list instead" offers the same sites as buttons.
-3. **Pick a needle and an angle.** Needles run from the tuberculin needle (¼ to ½ inch) to 1½ inch, with millimetres under each inch label. Each angle button has a small drawing of the needle meeting the skin. The camera turns to a cutaway of skin, fat, muscle and bone, and the syringe moves as you choose, so you see where the tip will end before you commit.
-4. **Check the answer.** The result says "Correct" or "Not quite", which tissue the needle ended in, and what was off. Below that is one line for each part (site, angle and needle) with the CDC wording behind it and its sources. After a miss, a "CDC's answer" card shows the right site, needle and angle.
+3. **Pick a needle and an angle.** Needles run from the tuberculin needle (¼ to ½ inch) to 1½ inch, with millimetres under each inch label. Each angle button has a small drawing of the needle meeting the skin. The camera turns to a cutaway of skin, fat, muscle and bone, and the syringe moves as you choose, so you see where the tip will end before you commit. Until both are chosen, the check button says what it is waiting for.
+4. **Check the answer.** The result says "Correct" or "Not quite", which tissue the needle ended in, and what was off. After a miss, a table puts what you chose beside CDC's answer for the site, needle and angle, each marked right or off. Below that is one line for each part with the CDC wording behind it and its sources.
+5. **See the site.** "Show site on patient" switches the 3D view from the cutaway back to the patient: landmarks on, only CDC's injection area drawn, the camera turned to it, and your own tap still marked. The panel adds CDC's description of how to find the site.
 
-The 30-second case on the first screen is this flow with one adult patient, and takes four taps after it opens. Practice mode runs all ten cases in order.
+The 30-second case on the first screen is this flow with one adult patient, and takes four taps after it opens. Practice mode runs all ten cases, in the written order the first time and in a new order on each repeat.
 
 ## What it does
 
 - **Ten practice cases.** Adults and infants across intramuscular, subcutaneous and intradermal routes (see the table below). A bar per case tracks correct and missed answers, and a step indicator shows where you are inside a case.
 - **Specific feedback.** Not just right or wrong. A wrong site is explained ("For most infants under 12 months, CDC recommends the outer front of the thigh, because it has more muscle than the deltoid"). So is a needle that is too short to reach the muscle, or longer than CDC lists for that patient, and a tap that missed every injection area is named by body region ("the upper third of the thigh").
-- **Learn from misses.** "Try again" reruns a missed case. The retry is graded but does not change the score. The review lists every case with what was off, repeats each miss with CDC's answer, and offers a round of just the missed cases.
+- **Learn from misses.** "Try again" reruns a missed case. The retry is graded but does not change the score. The review lists every case with what was off, repeats each miss with your answer beside CDC's, and offers a round of just the missed cases.
+- **Stop when you need to.** Once a case is answered, "End round" opens the review for the cases done so far, so leaving early does not throw the round away.
 - **Landmarks on demand.** "Show landmarks" reveals the skeleton, the injection muscles and the labelled bony landmarks: acromion, armpit fold, elbow joint, greater trochanter, iliac crest, anterior superior iliac spine and lateral condyle.
 - **Sources everywhere.** Every line of feedback carries the CDC documents it came from. The Sources screen lists each one with its publisher, date and access date.
-- **Phone first.** Controls are at least 44 px and sit in the lower half of the screen, under the thumb. On a desktop the controls move to a side panel.
+- **Phone first.** Controls are at least 44 px and sit in the lower half of the screen, under the thumb. On the review the 3D view shrinks to a strip so the list has room. On a desktop the controls move to a side panel.
+- **Light and dark.** The theme follows the device setting.
 
 <p>
   <img src="docs/desktop-review.png" alt="Desktop: the review lists every case with what was off, and offers a round of the missed cases" width="80%">
@@ -117,8 +125,9 @@ Left out because CDC does not give a value: volume limits per site, intradermal 
 ## Accessibility
 
 - Every control is a native button with a visible text label, and the site can be chosen from a list, so no step depends on using the 3D view.
+- A case can be answered with the keyboard alone. Each step takes focus as it opens, so Tab carries on from the step's own controls instead of the top of the page. On the site step the 3D view can be focused: the arrow keys turn the patient, plus and minus zoom.
 - Status changes (the site you marked, the result) are in live regions for screen readers. The 3D view has a text description that changes with the step and points to the site list.
-- Text and controls meet WCAG AA contrast. The colour used for small labels was measured at 4.36:1 on cards and darkened to 5.0:1.
+- Text meets WCAG AA contrast in both the light and the dark theme. This is measured, not assumed: the scripted checks walk the main screens in each theme and compare every piece of visible text with what is painted behind it.
 - With reduced motion requested, the patient does not turn on its own, camera moves are instant, step transitions are off, and the wait before the needle step drops from 800 ms to 250 ms.
 - Atkinson Hyperlegible Next, a typeface designed for low-vision readers, is self-hosted.
 - If WebGL is unavailable, the app says so plainly and names browsers to try instead of showing a blank canvas.
@@ -167,12 +176,15 @@ clinical.ts ──► grading.ts ──► Trainer.tsx ──► Stage3D.tsx ─
 
 ## Testing
 
-`npm run e2e` drives the real app in Edge or Chrome with touch input, through `playwright-core`, and saves screenshots. It runs 29 checks in five set-ups:
+`npm run e2e` drives the real app in Edge or Chrome, through `playwright-core`, and saves screenshots. It runs 45 checks in eight set-ups:
 
 | Set-up | What it checks |
 | --- | --- |
-| Phone, 390×844, touch | The first screen fits without scrolling and every control is at least 44 px. A drag and a pinch do not place a site. Landmark labels stay clear of the controls. The 30-second case is answered correctly in four taps, with the tap landing in the deltoid area and the cutaway reporting muscle. A wrong answer names the tissue and what was off, shows CDC's answer, and Try again keeps the score. About carries the synthetic-data and educational statements, Sources lists every citation with a link and access date, and there are no console errors. |
+| Phone, 390×844, touch | The first screen fits without scrolling and every control is at least 44 px. A drag and a pinch do not place a site. Landmark labels stay clear of the controls. The 30-second case is answered correctly in four taps, with the tap landing in the deltoid area and the cutaway reporting muscle. The check button says what it is waiting for. A wrong answer names the tissue and what was off and shows CDC's answer. CDC's site can be shown on the patient, with landmarks and how to find it, and the cutaway comes back. Try again keeps the score. End round opens a review of the cases answered so far, with the 3D view stepped back, and a repeat round opens on a different case. About carries the synthetic-data and educational statements, Sources lists every citation with a link and access date, and there are no console errors. |
 | Desktop, 1280×800 | The side panel flow, choosing the site from the list. A full ten-case practice run, then the review with every case, each miss with CDC's answer and sources, and a round of just the missed cases. |
+| Keyboard only, 1280×800 | With Tab, Shift+Tab and Enter alone: start a case, turn the patient with the arrow keys, pick the site from the list, pick the needle and angle, and check the answer. Focus is on each step as it opens. |
+| Contrast, light theme | Every piece of visible text on the first screen, the site step, the needle step, a missed result, the site view, the review, Sources and About is at least 4.5:1 against what is painted behind it (3:1 for large text). The audit first proves itself on a grey-on-grey sample. |
+| Contrast, dark theme | The same walk with the device set to dark, and the page really is dark. |
 | Small phone, 360×640 | The first screen still fits and the view buttons stay on screen. |
 | WebGL unavailable | A clear message appears instead of a blank canvas. |
 | Reduced motion | The patient does not turn on its own. |
@@ -215,6 +227,7 @@ docs/                Screenshots used in this README
 
 ## Limits
 
-- Tested in emulated phone and desktop browsers, not yet on a range of physical phones, and not yet with a screen reader or keyboard-only use.
+- Tested in emulated phone and desktop browsers, not yet on a range of physical phones. Keyboard use is covered by a scripted run, but it has not been tried with a screen reader.
+- The contrast audit measures text over the 3D view against its own label background, not against the pixels of the 3D scene behind it.
 - Covers only what CDC's vaccine administration and tuberculin skin test sources state. It does not grade volume, aspiration, skin preparation, or anything drug-specific.
 - The two patients are generic body shapes. Real patients vary, which is why CDC's needle rules are by weight and why clinical judgement and supervised training still apply.
