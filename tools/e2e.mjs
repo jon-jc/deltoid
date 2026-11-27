@@ -409,6 +409,119 @@ async function narrow(browser) {
   await ctx.close();
 }
 
+/** Visible text whose contrast with what is behind it falls below WCAG AA, measured in the page. */
+async function lowContrast(page) {
+  return page.evaluate(() => {
+    const parse = (c) => {
+      const m = c.match(/[\d.]+/g);
+      if (!m) return [0, 0, 0, 0];
+      const [r, g, b, a = 1] = m.map(Number);
+      return [r, g, b, a];
+    };
+    const over = (top, under) => top.slice(0, 3).map((v, i) => v * top[3] + under[i] * (1 - top[3])).concat(1);
+    const lum = (c) => {
+      const [r, g, b] = c.slice(0, 3).map((v) => {
+        const s = v / 255;
+        return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+      });
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    };
+    const found = [];
+    for (const el of document.body.querySelectorAll("*")) {
+      const own = [...el.childNodes].filter((n) => n.nodeType === 3 && n.textContent.trim()).map((n) => n.textContent.trim()).join(" ");
+      if (!own || el.closest(":disabled")) continue;
+      const box = el.getBoundingClientRect();
+      if (box.width < 2 || box.height < 2) continue;
+      // everything from the page down to this element, to find what is painted behind the text
+      const chain = [];
+      for (let n = el; n; n = n.parentElement) chain.unshift(n);
+      const styles = chain.map((n) => getComputedStyle(n));
+      if (styles.some((s) => Number(s.opacity) < 0.99 || s.visibility === "hidden" || s.display === "none")) continue;
+      let bg = [255, 255, 255, 1];
+      for (const s of styles) bg = over(parse(s.backgroundColor), bg);
+      const cs = styles[styles.length - 1];
+      const fg = over(parse(cs.color), bg);
+      const [hi, lo] = [lum(fg), lum(bg)].sort((a, b) => b - a);
+      const ratio = (hi + 0.05) / (lo + 0.05);
+      const size = parseFloat(cs.fontSize);
+      const large = size >= 24 || (size >= 18.66 && Number(cs.fontWeight) >= 700);
+      if (ratio < (large ? 3 : 4.5)) found.push(`"${own.slice(0, 28)}" ${ratio.toFixed(2)}:1`);
+    }
+    return found;
+  });
+}
+
+/** Walk the main screens in one colour theme and measure the contrast of every piece of text. */
+async function contrast(browser, scheme) {
+  log(`\n== Contrast, ${scheme} theme, 390x844 ==`);
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, colorScheme: scheme });
+  const page = await ctx.newPage();
+  const issues = [];
+  const audit = async (where) => {
+    for (const x of await lowContrast(page)) issues.push(`${where}: ${x}`);
+  };
+  const shot = (name) => page.screenshot({ path: join(OUT, `${scheme}-${name}.png`) });
+
+  await page.goto(BASE, { waitUntil: "domcontentloaded" });
+  await settled(page, 1300);
+  if (scheme === "dark") {
+    const paper = await page.evaluate(() => getComputedStyle(document.body).backgroundColor.match(/\d+/g).map(Number));
+    check(Math.max(...paper) < 60, `the dark theme follows the device setting (page background rgb ${paper.join(", ")})`);
+  }
+  if (scheme === "light") {
+    // make sure the audit itself works: grey text on grey must be reported
+    await page.evaluate(() => {
+      const p = document.createElement("p");
+      p.id = "contrast-probe";
+      p.textContent = "probe text";
+      p.style.cssText = "position:fixed;left:0;top:0;margin:0;color:#999;background:#aaa";
+      document.body.appendChild(p);
+    });
+    const caught = (await lowContrast(page)).some((x) => x.includes("probe text"));
+    await page.evaluate(() => document.getElementById("contrast-probe").remove());
+    check(caught, "the contrast audit catches a low-contrast sample");
+  }
+  await audit("first screen");
+  await shot("1-home");
+  await page.getByRole("button", { name: "Practice all cases" }).click();
+  await settled(page, 1200);
+  await page.getByRole("button", { name: "Show landmarks" }).click();
+  await settled(page, 2000);
+  await page.getByText("Choose the site from a list instead").click();
+  await audit("site step");
+  await shot("2-landmarks");
+  await page.getByRole("button", { name: "Buttock", exact: true }).click();
+  await page.getByText("Needle length").waitFor({ timeout: 8000 });
+  await settled(page, 900);
+  await page.getByRole("button", { name: "⅝ in", exact: true }).click();
+  await page.getByRole("button", { name: "45°", exact: true }).click();
+  await page.waitForTimeout(1300);
+  await audit("needle step");
+  await shot("3-needle");
+  await page.getByRole("button", { name: "Check answer" }).click();
+  await page.getByRole("heading", { name: "Not quite" }).waitFor({ timeout: 5000 });
+  await page.waitForTimeout(1400);
+  await audit("result");
+  await shot("4-result");
+  await page.getByRole("button", { name: "Show site on patient" }).click();
+  await settled(page, 1600);
+  await audit("site on patient");
+  await shot("5-site-on-patient");
+  await page.getByRole("button", { name: "End round" }).click();
+  await page.getByRole("heading", { name: "0 of 1 correct" }).waitFor({ timeout: 5000 });
+  await page.waitForTimeout(1000);
+  await audit("review");
+  await shot("6-review");
+  for (const path of ["/sources", "/about"]) {
+    await page.goto(BASE + path, { waitUntil: "domcontentloaded" });
+    await page.waitForTimeout(300);
+    await audit(path.slice(1));
+  }
+  await shot("7-about");
+  check(issues.length === 0, `all text meets AA contrast in the ${scheme} theme${issues.length ? `: ${issues.slice(0, 8).join(" | ")}` : ""}`);
+  await ctx.close();
+}
+
 async function noWebgl() {
   log("\n== WebGL unavailable ==");
   let b;
@@ -446,6 +559,8 @@ try {
   await phone(browser);
   await desktop(browser);
   await keyboard(browser);
+  await contrast(browser, "light");
+  await contrast(browser, "dark");
   await narrow(browser);
   await reducedMotion(browser);
 } finally {

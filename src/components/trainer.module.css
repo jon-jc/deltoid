@@ -36,8 +36,8 @@
   padding: 3px;
   border-radius: 999px;
   border: 1px solid var(--line-strong);
-  background: rgba(250, 248, 242, 0.94);
-  box-shadow: 0 1px 2px rgba(28, 42, 43, 0.08);
+  background: var(--glass);
+  box-shadow: var(--shadow);
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
 }
@@ -72,8 +72,8 @@
   padding: 0 13px 0 10px;
   border-radius: 999px;
   border: 1px solid var(--line-strong);
-  background: rgba(250, 248, 242, 0.94);
-  box-shadow: 0 1px 2px rgba(28, 42, 43, 0.08);
+  background: var(--glass);
+  box-shadow: var(--shadow);
   color: var(--ink);
   font: inherit;
   font-size: 0.875rem;
@@ -86,7 +86,7 @@
 .chip[aria-pressed="true"] {
   background: var(--teal);
   border-color: var(--teal);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .chipIcon {
@@ -164,7 +164,7 @@
   display: grid;
   place-items: center;
   background: var(--teal);
-  color: #fff;
+  color: var(--on-accent);
   font-size: 0.75rem;
   font-weight: 700;
 }
@@ -196,7 +196,7 @@
 .primary {
   border: 1px solid var(--teal);
   background: var(--teal);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .primary:disabled {
@@ -325,7 +325,7 @@
 .stepper [data-state="done"] .stepDot {
   background: var(--teal);
   border-color: var(--teal);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .linkBtn {
@@ -503,7 +503,7 @@
 }
 
 .segment[aria-pressed="true"] .segmentSub {
-  color: rgba(243, 240, 232, 0.78);
+  color: var(--on-ink-2);
 }
 
 .angleGlyph {
@@ -518,17 +518,17 @@
 }
 
 .angleNeedle {
-  stroke: var(--teal);
+  stroke: var(--teal-ink);
   stroke-width: 2.4;
   stroke-linecap: round;
 }
 
 .segment[aria-pressed="true"] .angleSkin {
-  stroke: rgba(243, 240, 232, 0.5);
+  stroke: var(--on-ink-line);
 }
 
 .segment[aria-pressed="true"] .angleNeedle {
-  stroke: #7fd0c6;
+  stroke: var(--on-ink-accent);
 }
 
 .segments[data-count="5"] .segment {
@@ -561,7 +561,7 @@
   border-radius: 50%;
   display: grid;
   place-items: center;
-  color: #fff;
+  color: var(--on-accent);
   font-weight: 700;
   font-size: 1.0625rem;
 }
@@ -669,7 +669,7 @@
   display: grid;
   gap: 8px;
   padding: 10px max(16px, env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
-  background: linear-gradient(to bottom, rgba(243, 240, 232, 0), var(--paper) 22%);
+  background: linear-gradient(to bottom, var(--paper-0), var(--paper) 22%);
 }
 
 .hint {
@@ -712,7 +712,7 @@
   border-radius: 50%;
   display: grid;
   place-items: center;
-  color: #fff;
+  color: var(--on-accent);
   font-size: 0.75rem;
   font-weight: 700;
 }
@@ -836,11 +836,11 @@
   flex: none;
   width: 1em;
   font-weight: 700;
-  color: var(--good);
+  color: var(--good-ink);
 }
 
 .answerCard tr[data-ok="0"] .answerMark {
-  color: var(--bad);
+  color: var(--bad-ink);
 }
 
 .answerCard tbody td:last-child {
