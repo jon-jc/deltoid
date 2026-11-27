@@ -25,6 +25,12 @@
   outline: none;
 }
 
+.canvas:focus-visible {
+  outline: 3px solid var(--amber);
+  outline-offset: -3px;
+  border-radius: 0;
+}
+
 .overlay {
   position: absolute;
   inset: 0;
