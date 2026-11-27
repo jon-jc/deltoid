@@ -252,6 +252,13 @@ async function phone(browser) {
   check(reviewStage.height <= 180, `on a phone the 3D view steps back for the review (${Math.round(reviewStage.height)} px tall)`);
   await page.screenshot({ path: join(OUT, "phone-10d-ended-early.png") });
 
+  // a repeat round comes in a new order, opening on a different case
+  await tapText(page, "Practice all cases in a new order");
+  await page.getByText(/^Case 1 of 10/).waitFor({ timeout: 5000 });
+  const opener = await page.locator('[class*="cardFacts"]').innerText();
+  check(!/Adult, 34 years/.test(opener), `a repeat round opens on a different case (${opener.replace(/\s+/g, " ")})`);
+  await settled(page, 600);
+
   // trust copy and sources
   await page.goto(BASE + "/about", { waitUntil: "domcontentloaded" });
   const about = await page.locator("main").innerText();
