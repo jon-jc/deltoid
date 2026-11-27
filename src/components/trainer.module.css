@@ -895,6 +895,23 @@
   }
 }
 
+/* Phones: the review is for reading, so the 3D view steps back and gives it the room. */
+@media (max-width: 899px) {
+  .stageWrap {
+    transition: height 0.32s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+
+  .stageWrap[data-screen="review"] {
+    height: clamp(120px, 20svh, 180px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stageWrap {
+    transition: none;
+  }
+}
+
 /* Wider screens: the 3D view takes the left, the panel sits beside it. */
 @media (min-width: 900px) and (min-height: 520px) {
   .shell {

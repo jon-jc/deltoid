@@ -364,7 +364,7 @@ export default function Trainer() {
 
   return (
     <main className={styles.shell}>
-      <section className={styles.stageWrap} aria-label="3D view">
+      <section className={styles.stageWrap} data-screen={s.screen} aria-label="3D view">
         <Stage3D
           handle={stage}
           mode={stageMode}

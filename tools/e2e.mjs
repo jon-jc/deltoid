@@ -247,6 +247,9 @@ async function phone(browser) {
   await tapText(page, "End round");
   await page.getByRole("heading", { name: "1 of 2 correct" }).waitFor({ timeout: 5000 });
   check(await page.getByText("You ended the round after 2 of 10 cases.").isVisible(), "End round opens a review of the cases answered so far");
+  await page.waitForTimeout(900);
+  const reviewStage = await stageBox(page);
+  check(reviewStage.height <= 180, `on a phone the 3D view steps back for the review (${Math.round(reviewStage.height)} px tall)`);
   await page.screenshot({ path: join(OUT, "phone-10d-ended-early.png") });
 
   // trust copy and sources
