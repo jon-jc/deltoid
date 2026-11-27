@@ -65,6 +65,7 @@ interface State {
 type Action =
   | { type: "start"; demo: boolean; queue?: number[] }
   | { type: "home" }
+  | { type: "finish" }
   | { type: "tap"; tap: Tap }
   | { type: "toNeedle" }
   | { type: "changeSite" }
@@ -113,6 +114,9 @@ function reducer(s: State, a: Action): State {
       return { ...INITIAL, screen: "case", demo: a.demo, queue: a.queue ?? ALL_CASES, view: { name: "case", nonce: s.view.nonce } };
     case "home":
       return { ...INITIAL, view: { name: "case", nonce: s.view.nonce } };
+    case "finish":
+      // end the round early: the review covers the cases answered so far
+      return s.screen === "case" ? { ...s, screen: "review", ...freshCase } : s;
     case "tap":
       return s.step === "site" ? { ...s, tap: a.tap } : s;
     case "toNeedle":
@@ -445,9 +449,15 @@ export default function Trainer() {
                 {scored.length > 0 && <span className={styles.muted}> · {correctCount} correct</span>}
               </span>
               {!(s.demo && s.index === 0) && <ScoreTrack cases={round} attempts={scored} index={s.index} />}
-              <button type="button" className={styles.linkBtn} onClick={() => dispatch({ type: "home" })}>
-                Start over
-              </button>
+              {scored.length > 0 ? (
+                <button type="button" className={styles.linkBtn} onClick={() => dispatch({ type: "finish" })}>
+                  End round
+                </button>
+              ) : (
+                <button type="button" className={styles.linkBtn} onClick={() => dispatch({ type: "home" })}>
+                  Start over
+                </button>
+              )}
             </div>
             <Stepper step={s.step} />
 
@@ -620,6 +630,11 @@ export default function Trainer() {
               <h1 className={styles.lead}>
                 {correctCount} of {scored.length} correct
               </h1>
+              {scored.length < round.length && (
+                <p className={styles.fine}>
+                  You ended the round after {scored.length} of {round.length} cases.
+                </p>
+              )}
               <ol className={styles.tally} aria-label="Every case in this round">
                 {scored.map((a) => {
                   const rc = CASES.find((x) => x.id === a.caseId) as Case;

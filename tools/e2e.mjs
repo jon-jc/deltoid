@@ -243,6 +243,12 @@ async function phone(browser) {
   // the infant thigh, found from its landmarks, is accepted on the following infant case
   void gt;
 
+  // ending a round early keeps what was answered
+  await tapText(page, "End round");
+  await page.getByRole("heading", { name: "1 of 2 correct" }).waitFor({ timeout: 5000 });
+  check(await page.getByText("You ended the round after 2 of 10 cases.").isVisible(), "End round opens a review of the cases answered so far");
+  await page.screenshot({ path: join(OUT, "phone-10d-ended-early.png") });
+
   // trust copy and sources
   await page.goto(BASE + "/about", { waitUntil: "domcontentloaded" });
   const about = await page.locator("main").innerText();
