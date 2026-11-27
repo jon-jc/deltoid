@@ -324,6 +324,64 @@ async function desktop(browser) {
   await ctx.close();
 }
 
+async function keyboard(browser) {
+  log("\n== Keyboard only, 1280x800 ==");
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 });
+  const page = await ctx.newPage();
+  await page.goto(BASE, { waitUntil: "domcontentloaded" });
+  await settled(page, 1500);
+  const focused = () =>
+    page.evaluate(() => {
+      const el = document.activeElement;
+      return el ? { tag: el.tagName, text: (el.getAttribute("aria-label") ?? el.textContent ?? "").trim() } : { tag: "", text: "" };
+    });
+  /** Press Tab (or Shift+Tab) until the focused element matches. */
+  const tabTo = async (match, key = "Tab") => {
+    for (let i = 0; i < 40; i++) {
+      await page.keyboard.press(key);
+      if (match(await focused())) return true;
+    }
+    return false;
+  };
+  const named = (name) => (f) => f.text.startsWith(name);
+
+  let reached = await tabTo(named("Try a 30-second case"));
+  await page.keyboard.press("Enter");
+  await settled(page, 1200);
+  check(reached && /^Step 1 of 3/.test((await focused()).text), "starting a case moves keyboard focus to the first step");
+
+  // the 3D view is reachable and answers to the arrow keys
+  const onCanvas = await tabTo((f) => f.tag === "CANVAS", "Shift+Tab");
+  const before = await page.locator("canvas").screenshot();
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  await page.waitForTimeout(500);
+  const turned = Buffer.compare(before, await page.locator("canvas").screenshot()) !== 0;
+  check(onCanvas && turned, "the arrow keys turn the patient");
+
+  // site from the list, then needle, angle and check, without a pointer
+  reached = await tabTo(named("Choose the site from a list instead"));
+  await page.keyboard.press("Enter");
+  reached = reached && (await tabTo(named("Deltoid, upper arm")));
+  await page.keyboard.press("Enter");
+  await page.getByText("Needle length").waitFor({ timeout: 8000 });
+  await settled(page, 1000);
+  const step2 = /^Step 2 of 3/.test((await focused()).text);
+  reached = reached && (await tabTo(named("1 in")));
+  await page.keyboard.press("Enter");
+  reached = reached && (await tabTo(named("90°")));
+  await page.keyboard.press("Enter");
+  reached = reached && (await tabTo(named("Check answer")));
+  await page.keyboard.press("Enter");
+  const correct = await page.getByRole("heading", { name: "Correct" }).waitFor({ timeout: 5000 }).then(() => true, () => false);
+  await page.waitForTimeout(600);
+  const step3 = /^Step 3 of 3/.test((await focused()).text);
+  check(reached && correct, "a case can be answered with the keyboard alone");
+  check(step2 && step3, "keyboard focus follows each step");
+  await page.screenshot({ path: join(OUT, "keyboard-result.png") });
+  await ctx.close();
+}
+
 async function narrow(browser) {
   log("\n== Small phone, 360x640 ==");
   const ctx = await browser.newContext({ viewport: { width: 360, height: 640 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true });
@@ -380,6 +438,7 @@ const browser = await launch();
 try {
   await phone(browser);
   await desktop(browser);
+  await keyboard(browser);
   await narrow(browser);
   await reducedMotion(browser);
 } finally {

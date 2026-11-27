@@ -351,6 +351,12 @@
   padding: 14px max(16px, env(safe-area-inset-right)) 14px max(16px, env(safe-area-inset-left));
 }
 
+/* These take focus when a step opens so the keyboard carries on from here; they are not controls. */
+.body:focus,
+.home:focus {
+  outline: none;
+}
+
 .card {
   padding: 14px 16px;
   border-radius: 14px;

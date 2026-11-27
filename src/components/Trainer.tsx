@@ -315,6 +315,7 @@ export default function Trainer() {
   const [s, dispatch] = useReducer(reducer, INITIAL);
   const stage = useRef<StageHandle>(null);
   const panel = useRef<HTMLDivElement>(null);
+  const mounted = useRef(false);
   const round = s.queue.map((i) => CASES[i]);
   const c = round[s.index];
   const missedRound = s.queue.length < CASES.length;
@@ -332,9 +333,15 @@ export default function Trainer() {
     return () => window.clearTimeout(id);
   }, [s.screen, s.step, s.tap]);
 
-  // each new step starts at the top of the panel
+  // each new step starts at the top of the panel, and takes the keyboard focus with it:
+  // the button that was just used is gone, and focus would otherwise fall back to the top of the page
   useEffect(() => {
     panel.current?.scrollTo({ top: 0 });
+    if (!mounted.current) {
+      mounted.current = true;
+      return;
+    }
+    panel.current?.querySelector<HTMLElement>("[data-step-focus]")?.focus({ preventScroll: true });
   }, [s.screen, s.step, s.index]);
 
   const profile = useMemo(() => cutawayProfile(c, acceptedSite(c, s.tap)), [c, s.tap]);
@@ -415,7 +422,7 @@ export default function Trainer() {
 
       <section className={styles.panel} ref={panel}>
         {s.screen === "home" && (
-          <div className={styles.home}>
+          <div className={styles.home} role="group" aria-label="Start" tabIndex={-1} data-step-focus>
             <h1 className={styles.lead}>{COPY.tagline}</h1>
             <ol className={styles.how} aria-label="How a case works">
               {["Tap the site", "Pick a needle", "Set the angle", "See where it lands"].map((t, i) => (
@@ -462,7 +469,7 @@ export default function Trainer() {
             <Stepper step={s.step} />
 
             {s.step === "site" && (
-              <div className={styles.body}>
+              <div className={styles.body} role="group" aria-label="Step 1 of 3: choose the site" tabIndex={-1} data-step-focus>
                 <CaseCard c={c} />
                 <p className={styles.prompt}>
                   {s.tap ? (
@@ -492,7 +499,7 @@ export default function Trainer() {
             )}
 
             {s.step === "needle" && s.tap && (
-              <div className={styles.body}>
+              <div className={styles.body} role="group" aria-label="Step 2 of 3: needle and angle" tabIndex={-1} data-step-focus>
                 <p className={styles.siteLine}>
                   <span>
                     <span className={styles.muted}>{c.patient} · {ROUTES[c.route].label}</span>
@@ -543,7 +550,7 @@ export default function Trainer() {
             )}
 
             {s.step === "result" && last && (
-              <div className={styles.body}>
+              <div className={styles.body} role="group" aria-label="Step 3 of 3: result" tabIndex={-1} data-step-focus>
                 <div className={styles.verdict} data-ok={last.result.correct ? "1" : "0"}>
                   <span className={styles.mark} aria-hidden="true">
                     {last.result.correct ? "✓" : "✕"}
@@ -626,7 +633,7 @@ export default function Trainer() {
                 Back to start
               </button>
             </div>
-            <div className={styles.body}>
+            <div className={styles.body} role="group" aria-label="Review" tabIndex={-1} data-step-focus>
               <h1 className={styles.lead}>
                 {correctCount} of {scored.length} correct
               </h1>

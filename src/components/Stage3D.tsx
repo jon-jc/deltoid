@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useImperativeHandle, useRef, useState, type Ref } from "react";
+import { useEffect, useImperativeHandle, useRef, useState, type KeyboardEvent, type Ref } from "react";
 import { LANDMARKS, TISSUES, type TissueId } from "@/content/clinical";
 import type { CutawayProfile, NeedlePose, PatientKind, Side, Stage, TapResult, ViewName } from "@/three/stage";
 import styles from "./stage.module.css";
@@ -159,18 +159,38 @@ export default function Stage3D(props: Stage3DProps) {
     if (injected) stageRef.current?.inject();
   }, [gen, injected]);
 
+  // the patient can be turned and zoomed without a pointer
+  const turnable = mode === "site" || mode === "answer";
+  const onKey = (e: KeyboardEvent<HTMLCanvasElement>) => {
+    const s = stageRef.current;
+    if (!s || !turnable) return;
+    if (e.key === "ArrowLeft") s.rotateBy(0.2);
+    else if (e.key === "ArrowRight") s.rotateBy(-0.2);
+    else if (e.key === "+" || e.key === "=") s.zoomBy(0.85);
+    else if (e.key === "-" || e.key === "_") s.zoomBy(1 / 0.85);
+    else return;
+    e.preventDefault();
+  };
+
   const label =
     mode === "cutaway"
       ? "Cross-section of skin, fat, muscle and bone with a syringe. The layer the needle tip reaches is named below."
       : mode === "site"
-        ? "3D patient. Tap the injection site, drag to turn, pinch to zoom. A list of sites is available below."
+        ? "3D patient. Tap the injection site, drag to turn, pinch to zoom. With a keyboard, the arrow keys turn it and plus and minus zoom. A list of sites is available below."
         : mode === "answer"
-          ? `3D patient with the landmarks showing and CDC's site picked out: ${answer?.label ?? ""}. Drag to turn, pinch to zoom.`
+          ? `3D patient with the landmarks showing and CDC's site picked out: ${answer?.label ?? ""}. Drag to turn, pinch to zoom, or use the arrow keys and plus and minus.`
           : "3D patient figure turning slowly.";
 
   return (
     <div className={styles.stage} data-mode={mode}>
-      <canvas ref={canvasRef} className={styles.canvas} role="img" aria-label={label} />
+      <canvas
+        ref={canvasRef}
+        className={styles.canvas}
+        role="img"
+        aria-label={label}
+        tabIndex={turnable ? 0 : -1}
+        onKeyDown={onKey}
+      />
       <div ref={overlayRef} className={styles.overlay} aria-hidden="true" data-labels="off" />
 
       {mode === "cutaway" && problem === "none" && (
