@@ -576,6 +576,37 @@
   color: var(--bad-ink);
 }
 
+/* Switches the 3D view between the cutaway and CDC's site on the patient. */
+.siteToggle {
+  margin-left: auto;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.findIt {
+  display: grid;
+  gap: 6px;
+  padding: 10px 14px 12px;
+  border-radius: 12px;
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  font-size: 0.9375rem;
+  line-height: 1.42;
+}
+
+.findIt p {
+  margin: 0;
+}
+
 .summary {
   margin: 0;
   font-size: 1.0625rem;

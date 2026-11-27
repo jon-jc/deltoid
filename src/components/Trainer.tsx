@@ -19,7 +19,7 @@ import {
   type SiteId,
   type SourceId,
 } from "@/content/clinical";
-import { correctAnswer, cutawayProfile, grade, tipTissue, type Pick, type Result } from "@/lib/grading";
+import { correctAnswer, cutawayProfile, grade, recommendedSite, tipTissue, type Pick, type Result } from "@/lib/grading";
 import type { TapResult, ViewName } from "@/three/stage";
 import Stage3D, { type StageHandle } from "./Stage3D";
 import styles from "./trainer.module.css";
@@ -56,6 +56,8 @@ interface State {
   landmarks: boolean;
   usedLandmarks: boolean;
   retrying: boolean;
+  /** on the result step: the 3D view shows CDC's site on the patient instead of the cutaway */
+  siteView: boolean;
   view: { name: ViewName; nonce: number };
   attempts: Attempt[];
 }
@@ -70,6 +72,7 @@ type Action =
   | { type: "angle"; id: AngleId }
   | { type: "check" }
   | { type: "retry" }
+  | { type: "siteView" }
   | { type: "next" }
   | { type: "landmarks" }
   | { type: "view"; name: ViewName };
@@ -88,6 +91,7 @@ const INITIAL: State = {
   landmarks: false,
   usedLandmarks: false,
   retrying: false,
+  siteView: false,
   view: { name: "case", nonce: 0 },
   attempts: [],
 };
@@ -100,6 +104,7 @@ const freshCase = {
   landmarks: false,
   usedLandmarks: false,
   retrying: false,
+  siteView: false,
 };
 
 function reducer(s: State, a: Action): State {
@@ -133,6 +138,8 @@ function reducer(s: State, a: Action): State {
     }
     case "retry":
       return s.step === "result" ? { ...s, ...freshCase, retrying: true, view: { name: "case", nonce: s.view.nonce + 1 } } : s;
+    case "siteView":
+      return s.step === "result" ? { ...s, siteView: !s.siteView } : s;
     case "next":
       if (s.index + 1 >= s.queue.length) return { ...s, screen: "review", ...freshCase };
       return { ...s, index: s.index + 1, ...freshCase };
@@ -345,7 +352,10 @@ export default function Trainer() {
     dispatch({ type: "tap", tap: { site, side: "L", region: "Body", point } });
   };
 
-  const stageMode = s.screen !== "case" ? "home" : s.step === "site" ? "site" : "cutaway";
+  const rec = recommendedSite(c);
+  const siteView = s.screen === "case" && s.step === "result" && s.siteView;
+  const onSite = s.screen === "case" && s.step === "site";
+  const stageMode = s.screen !== "case" ? "home" : onSite ? "site" : siteView ? "answer" : "cutaway";
   const patient = s.screen === "case" ? c.model : "adult";
 
   return (
@@ -355,17 +365,18 @@ export default function Trainer() {
           handle={stage}
           mode={stageMode}
           patient={patient}
-          landmarks={s.screen === "case" && s.step === "site" && s.landmarks}
+          landmarks={(onSite && s.landmarks) || siteView}
           view={s.view}
-          marker={s.screen === "case" && s.step === "site" && s.tap ? s.tap.point : null}
+          marker={(onSite || siteView) && s.tap ? s.tap.point : null}
           profile={profile}
           needle={needlePose}
           injected={s.step === "result"}
           tipTissue={tip}
-          bottomInset={s.screen === "case" && s.step === "site" ? 60 : 0}
+          answer={siteView ? { zone: rec.site, side: s.tap?.side ?? "L", label: SITES[rec.site].label } : null}
+          bottomInset={onSite ? 60 : 0}
           onTap={onTap}
         />
-        {s.screen === "case" && s.step === "site" && (
+        {onSite && (
           <div className={styles.stageBar}>
             <button
               type="button"
@@ -528,7 +539,18 @@ export default function Trainer() {
                     {last.result.correct ? "✓" : "✕"}
                   </span>
                   <h2>{last.result.correct ? "Correct" : "Not quite"}</h2>
+                  <button type="button" className={styles.siteToggle} onClick={() => dispatch({ type: "siteView" })}>
+                    {s.siteView ? "Back to the cutaway" : "Show site on patient"}
+                  </button>
                 </div>
+                {s.siteView && (
+                  <div className={styles.findIt} role="status">
+                    <p>
+                      <strong>CDC&apos;s site: {SITES[rec.site].label}.</strong> {SITES[rec.site].find.text}
+                    </p>
+                    <SourceLinks ids={SITES[rec.site].find.sources} />
+                  </div>
+                )}
                 <p className={styles.summary} role="status">
                   {last.result.summary}
                 </p>

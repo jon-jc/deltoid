@@ -10,7 +10,7 @@ export interface StageHandle {
 }
 
 export interface Stage3DProps {
-  mode: "home" | "site" | "cutaway";
+  mode: "home" | "site" | "cutaway" | "answer";
   patient: PatientKind;
   landmarks: boolean;
   view: { name: ViewName; nonce: number };
@@ -19,6 +19,8 @@ export interface Stage3DProps {
   needle: NeedlePose;
   injected: boolean;
   tipTissue: TissueId | null;
+  /** In "answer" mode: the injection area to pick out on the patient, and its name. */
+  answer: { zone: string; side: Side; label: string } | null;
   /** Height in pixels of controls drawn over the bottom of the view. */
   bottomInset: number;
   onTap: (tap: TapResult) => void;
@@ -33,12 +35,13 @@ interface LayerRow {
 const LAYER_ORDER: TissueId[] = ["skin", "fat", "muscle", "bone"];
 
 export default function Stage3D(props: Stage3DProps) {
-  const { mode, patient, landmarks, view, marker, profile, needle, injected, tipTissue, bottomInset, onTap, handle } = props;
+  const { mode, patient, landmarks, view, marker, profile, needle, injected, tipTissue, answer, bottomInset, onTap, handle } = props;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Stage | null>(null);
   const tapRef = useRef(onTap);
   const profileRef = useRef(profile);
+  const liveRef = useRef({ answer, marker, injected, needle });
   const [gen, setGen] = useState(0);
   const [problem, setProblem] = useState<"none" | "nowebgl" | "error">("none");
   const [message, setMessage] = useState("");
@@ -48,6 +51,7 @@ export default function Stage3D(props: Stage3DProps) {
   useEffect(() => {
     tapRef.current = onTap;
     profileRef.current = profile;
+    liveRef.current = { answer, marker, injected, needle };
   });
 
   useImperativeHandle(handle, () => ({
@@ -109,8 +113,18 @@ export default function Stage3D(props: Stage3DProps) {
   useEffect(() => {
     const s = stageRef.current;
     if (!s) return;
+    const live = liveRef.current;
     if (mode === "cutaway") {
-      void s.showCutaway(profileRef.current);
+      // the cutaway opens with the syringe above the skin: put the chosen needle back in,
+      // and press the plunger again when coming back to an answer that was already checked
+      void s.showCutaway(profileRef.current).then(() => {
+        const now = liveRef.current;
+        s.setNeedle({ lengthMm: now.needle.lengthMm, angleDeg: now.needle.angleDeg, bevelOnly: now.needle.bevelOnly });
+        if (now.injected) s.inject();
+      });
+    } else if (mode === "answer" && live.answer) {
+      s.setInteractive(true);
+      void s.showAnswer(patient, live.answer.zone, live.answer.side, live.marker);
     } else {
       s.setInteractive(mode === "site");
       void s.showPatient(patient, mode === "home" ? "body" : "case", mode === "home");
@@ -134,8 +148,8 @@ export default function Stage3D(props: Stage3DProps) {
     const s = stageRef.current;
     if (!s) return;
     s.setMarker(marker);
-    if (marker) s.focusOn(marker);
-  }, [gen, marker]);
+    if (marker && mode === "site") s.focusOn(marker);
+  }, [gen, marker, mode]);
 
   useEffect(() => {
     stageRef.current?.setNeedle({ lengthMm: needle.lengthMm, angleDeg: needle.angleDeg, bevelOnly: needle.bevelOnly });
@@ -150,7 +164,9 @@ export default function Stage3D(props: Stage3DProps) {
       ? "Cross-section of skin, fat, muscle and bone with a syringe. The layer the needle tip reaches is named below."
       : mode === "site"
         ? "3D patient. Tap the injection site, drag to turn, pinch to zoom. A list of sites is available below."
-        : "3D patient figure turning slowly.";
+        : mode === "answer"
+          ? `3D patient with the landmarks showing and CDC's site picked out: ${answer?.label ?? ""}. Drag to turn, pinch to zoom.`
+          : "3D patient figure turning slowly.";
 
   return (
     <div className={styles.stage} data-mode={mode}>
@@ -182,6 +198,13 @@ export default function Stage3D(props: Stage3DProps) {
             "Pick a needle and an angle"
           )}
           <span className={styles.caption}>Schematic, not to scale</span>
+        </p>
+      )}
+
+      {mode === "answer" && answer && problem === "none" && (
+        <p className={styles.tip} data-wide="1" role="status">
+          CDC&apos;s site: <strong>{answer.label}</strong>
+          {marker && <span className={styles.caption}>The orange dot is where you tapped</span>}
         </p>
       )}
 

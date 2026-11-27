@@ -81,6 +81,12 @@
   max-width: 62%;
 }
 
+.tip[data-wide="1"] {
+  max-width: calc(100% - 24px);
+  /* landmark labels can pass behind it: do not let them show through */
+  background: #faf8f2;
+}
+
 .tip strong {
   color: var(--amber-ink);
 }

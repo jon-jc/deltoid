@@ -216,6 +216,20 @@ async function phone(browser) {
   await page.screenshot({ path: join(OUT, "phone-10-miss.png"), fullPage: false });
   check(await page.getByText("CDC's answer").isVisible(), "a miss shows CDC's answer");
 
+  // the 3D view can show CDC's site on the patient, then go back to the cutaway
+  await tapText(page, "Show site on patient");
+  await settled(page, 1500);
+  await page.screenshot({ path: join(OUT, "phone-10b-site-on-patient.png") });
+  const shown = await page.locator('[class*="tip"]').first().innerText();
+  const how = await page.locator('[class*="findIt"]').innerText();
+  check(/CDC's site: Outer front of the thigh/.test(shown) && /greater trochanter/.test(how) && /Source/.test(how),
+    "after a miss, CDC's site can be shown on the patient with how to find it");
+  check((await landmark(page, "GreaterTrochanter")).length === 2, "the site view shows the landmarks");
+  await tapText(page, "Back to the cutaway");
+  await settled(page, 1200);
+  await page.screenshot({ path: join(OUT, "phone-10c-back-to-cutaway.png") });
+  check(/Needle tip/.test(await page.locator('[class*="tip"]').first().innerText()), "the cutaway comes back");
+
   // a second try is graded but leaves the score alone
   const before = await page.locator('[class*="progressLabel"]').innerText();
   await tapText(page, "Try again");
