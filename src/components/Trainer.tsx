@@ -583,7 +583,13 @@ export default function Trainer() {
                   disabled={!s.needle || !s.angle}
                   onClick={() => dispatch({ type: "check" })}
                 >
-                  Check answer
+                  {s.needle && s.angle
+                    ? "Check answer"
+                    : s.needle
+                      ? "Now pick an angle"
+                      : s.angle
+                        ? "Now pick a needle"
+                        : "Pick a needle and an angle"}
                 </button>
               )}
               {s.step === "result" && (
