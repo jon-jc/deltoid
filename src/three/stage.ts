@@ -447,8 +447,12 @@ export class Stage {
     if (n.lengthSq() < 1e-6) n.set(0, 0, 1);
     n.normalize();
     const pitch = Math.min(0.4, Math.max(0.04, Math.asin(n.y) * 0.6));
-    box.expandByScalar(p.height * 0.09);
-    this.flyTo(box, Math.atan2(n.x, n.z), pitch, true, 1.2);
+    // an area on the side of a limb would be seen in profile, with the trunk behind it:
+    // come round toward the front so the body still reads as a body
+    if (n.z > -0.3) n.z += 0.55;
+    // and stand far enough back to see where on the limb the area is
+    box.expandByScalar(p.height * 0.14);
+    this.flyTo(box, Math.atan2(n.x, n.z), pitch, true, 1.15);
   }
 
   setInteractive(on: boolean) {
