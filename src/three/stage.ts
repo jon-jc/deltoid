@@ -79,6 +79,7 @@ interface Patient {
   root: Group;
   body: Mesh;
   zones: Mesh[];
+  zoneMat: MeshBasicMaterial;
   overlays: Object3D[];
   landmarks: Landmark[];
   dots: Group;
@@ -150,6 +151,12 @@ export class Stage {
   private bottomInset = 0;
   private landmarksOn = false;
   private labelSpecs: LabelSpec[] = [];
+  /** When set, only this injection area is drawn, in a stronger tint. */
+  private highlight: string | null = null;
+  private highlightMat = new MeshBasicMaterial({
+    color: COLORS.zone, transparent: true, opacity: 0.82, depthWrite: false,
+    polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
+  });
 
   // pointers
   private pointers = new Map<number, { x: number; y: number; sx: number; sy: number }>();
@@ -354,7 +361,7 @@ export class Stage {
     root.add(dots);
     overlays.forEach((o) => (o.visible = false));
 
-    const patient: Patient = { kind, root, body, zones, overlays, landmarks, dots, regions, views, anatomy: null, anatomyRequested: false, height };
+    const patient: Patient = { kind, root, body, zones, zoneMat, overlays, landmarks, dots, regions, views, anatomy: null, anatomyRequested: false, height };
     this.patients.set(kind, patient);
     return patient;
   }
@@ -387,7 +394,8 @@ export class Stage {
 
   /* --------------------------------------------------------- patient */
 
-  async showPatient(kind: PatientKind, view: ViewName, spin: boolean) {
+  async showPatient(kind: PatientKind, view: ViewName, spin: boolean, highlight: string | null = null) {
+    this.highlight = highlight;
     this.cb.onLoading?.(this.patients.has(kind) ? null : "Loading patient model");
     let p: Patient;
     try {
@@ -412,6 +420,35 @@ export class Stage {
     this.applyLandmarks();
     this.setView(view, false);
     this.dirty = true;
+  }
+
+  /**
+   * Show the patient with one injection area picked out and the landmarks on,
+   * the camera turned to face that area. Used to show CDC's site after an answer.
+   */
+  async showAnswer(kind: PatientKind, zone: string, side: Side, marker: [number, number, number] | null) {
+    await this.showPatient(kind, "case", false, zone);
+    const p = this.current;
+    if (this.disposed || !p || p.kind !== kind || this.highlight !== zone) return;
+    this.setMarker(marker);
+    const mesh = p.zones.find((z) => z.userData.zone === zone && z.userData.side === side) ?? p.zones.find((z) => z.userData.zone === zone);
+    if (!mesh) return;
+    const box = new Box3().setFromObject(mesh);
+    const centre = box.getCenter(new Vector3());
+    // face the area: the average of its surface normals points out of the skin
+    const n = new Vector3();
+    const normals = mesh.geometry.getAttribute("normal");
+    if (normals) {
+      const v = new Vector3();
+      for (let i = 0; i < normals.count; i++) n.add(v.fromBufferAttribute(normals, i));
+      n.transformDirection(mesh.matrixWorld);
+    }
+    if (n.lengthSq() < 1e-6) n.set(centre.x, 0, centre.z);
+    if (n.lengthSq() < 1e-6) n.set(0, 0, 1);
+    n.normalize();
+    const pitch = Math.min(0.4, Math.max(0.04, Math.asin(n.y) * 0.6));
+    box.expandByScalar(p.height * 0.09);
+    this.flyTo(box, Math.atan2(n.x, n.z), pitch, true, 1.2);
   }
 
   setInteractive(on: boolean) {
@@ -444,6 +481,11 @@ export class Stage {
       this.computeLandmarkNormals(p);
     }
     p.overlays.forEach((o) => (o.visible = on));
+    for (const z of p.zones) {
+      const picked = this.highlight !== null && z.userData.zone === this.highlight;
+      z.material = picked ? this.highlightMat : p.zoneMat;
+      if (this.highlight !== null) z.visible = on && picked;
+    }
     if (p.anatomy) p.anatomy.visible = on;
     const skin = p.body.material as MeshStandardMaterial;
     skin.transparent = on;
